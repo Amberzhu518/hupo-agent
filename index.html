@@ -39,8 +39,11 @@
   .logo b{font-size:15px}
   .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
   /* 菜单按钮（顶栏左上） */
-  .menu-btn{border:none;background:var(--blue-soft);color:var(--blue);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex:0 0 36px}
-  .menu-btn:hover{background:#dcebff}
+  .menu-btn{border:none;background:var(--blue-soft);color:var(--blue);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex:0 0 36px;position:relative;z-index:200;box-shadow:0 2px 8px rgba(120,140,200,.18)}
+  .menu-btn:hover{background:#dcebff;box-shadow:0 3px 12px rgba(120,140,200,.28)}
+  /* 侧栏收起后强制让 ☰ 浮在最显眼的位置 */
+  body.side-collapsed-desktop .menu-btn{background:#fff;border:2px solid var(--blue);animation:menubob 1.6s ease-in-out infinite}
+  @keyframes menubob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
   /* 侧栏关闭按钮（手机抽屉内） */
   .side-close{border:none;background:#f0f2f8;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text-soft);align-self:flex-end;margin-bottom:4px}
   .side-close:hover{background:#e6e9f3}
@@ -213,6 +216,7 @@
       <div><b>琥珀的agent</b><small>个人成长管家</small></div>
     </div>
     <button class="nav-btn active" data-v="overview"><span class="ic">🏠</span><span class="nav-text">概览</span></button>
+    <button class="nav-btn" data-v="digest"><span class="ic">📻</span><span class="nav-text">每日播报</span></button>
     <button class="nav-btn" data-v="chat"><span class="ic">💬</span><span class="nav-text">对话</span></button>
     <button class="nav-btn" data-v="goals"><span class="ic">🎯</span><span class="nav-text">目标</span></button>
     <button class="nav-btn" data-v="tasks"><span class="ic">📝</span><span class="nav-text">待办</span></button>
@@ -457,7 +461,7 @@ async function fetchPushes(){
       }catch(e){}
     }
     pushCache=out;
-    if(curView==='overview') render();
+    if(curView==='overview'||curView==='digest') render();
   }catch(e){ pushCache={digest:{},reminder:null}; }
 }
 function setProvider(p){
@@ -465,8 +469,8 @@ function setProvider(p){
   const gb=document.getElementById('giteeBox'); if(gb) gb.style.display = p==='gitee'?'':'none';
   const hb=document.getElementById('githubBox'); if(hb) hb.style.display = p==='github'?'':'none';
   const lb=document.getElementById('localSyncBox'); if(lb) lb.style.display = p==='local'?'':'none';
-  if(p==='gitee'){ if(gtToken&&gtOwner){ giteePull(); } else { toast('请填写 Gitee 令牌'); } }
-  else if(p==='github'){ if(ghToken&&ghOwner){ githubPull(); } else { toast('请填写 GitHub 令牌'); } }
+  if(p==='gitee'){ if(gtToken&&gtOwner){ giteePull(); fetchPushes(); } else { toast('请填写 Gitee 令牌'); } }
+  else if(p==='github'){ if(ghToken&&ghOwner){ githubPull(); fetchPushes(); } else { toast('请填写 GitHub 令牌'); } }
   else { syncPull(); }
   toast(p==='gitee'?'已切换为云端中转(Gitee)':p==='github'?'已切换为云端中转(GitHub)':'已切换为连本机');
 }
@@ -732,7 +736,7 @@ function summaryText(){
 
 /* ============ 渲染 ============ */
 let curView='overview';
-const TITLES={overview:'工作台概览',chat:'与琥珀对话',goals:'目标进度',tasks:'待办任务',research:'科研 / 学习',finance:'财务管理',exercise:'运动健康',skills:'技能中心',photos:'相册',review:'复盘系统',ach:'成就墙'};
+const TITLES={overview:'工作台概览',digest:'📻 每日播报',chat:'与琥珀对话',goals:'目标进度',tasks:'待办任务',research:'科研 / 学习',finance:'财务管理',exercise:'运动健康',skills:'技能中心',photos:'相册',review:'复盘系统',ach:'成就墙'};
 
 /* 侧栏展开/收起：手机用抽屉，桌面用收起/展开。状态持久化（手机模式下不记忆）。 */
 function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
@@ -744,11 +748,15 @@ function applySide(){
     const open=(sessionStorage.getItem('hupo_side_open')==='1');
     side.classList.toggle('open', open);
     side.classList.remove('collapsed');
+    document.body.classList.remove('side-collapsed-desktop','side-open-mobile');
+    if(open) document.body.classList.add('side-open-mobile');
     if(mask) mask.classList.toggle('show', open);
   }else{
     const collapsed=(localStorage.getItem('hupo_side_collapsed')==='1');
     side.classList.toggle('collapsed', collapsed);
     side.classList.remove('open');
+    document.body.classList.remove('side-open-mobile');
+    document.body.classList.toggle('side-collapsed-desktop', collapsed);
     if(mask) mask.classList.remove('show');
   }
 }
@@ -764,6 +772,7 @@ function render(){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.v===curView));
   const v=document.getElementById('view');
   if(curView==='overview') v.innerHTML=viewOverview();
+  else if(curView==='digest') v.innerHTML=viewDigest();
   else if(curView==='chat') v.innerHTML=viewChat();
   else if(curView==='goals') v.innerHTML=viewGoals();
   else if(curView==='tasks') v.innerHTML=viewTasks();
@@ -782,10 +791,10 @@ function inboxHtml(){
   const d=pushCache;
   const cats=['新闻联播','AI日报','财务日报'].filter(c=>(d.digest[c]||[]).length);
   const hasRem=!!d.reminder;
-  if(!cats.length && !hasRem) return '';
+  if(!cats.length && !hasRem) return '<div class="card inbox"><h3>📨 琥珀来信</h3><div class="empty" style="padding:14px 0">暂时没有琥珀来信。当晚 21:00 / 23:00 自动推送后下次打开就能看到。<br><span class="sub">也可点上面「🔄 手动拉取琥珀来信」按钮立即刷新。</span></div></div>';
   const emojiOf=c=>c==='新闻联播'?'📺':c==='AI日报'?'🤖':c==='财务日报'?'💹':'📌';
   const read=(state.readPush||[]);
-  let h='<div class="card inbox"><div class="inbox-head"><h3>📨 琥珀来信</h3><span class="sub">来自琥珀的每日推送 · 不在 WorkBuddy，直接在 agent 里看</span></div>';
+  let h='<div class="card inbox"><div class="inbox-head"><h3>📨 琥珀来信</h3><span class="sub">每天 21:00（每日推送）+ 23:00（睡前小结）由琥珀自动推送</span></div>';
   cats.forEach(c=>{
     const items=(d.digest[c]||[]).filter(it=>it && it.title);
     if(!items.length) return;
@@ -827,16 +836,35 @@ function todayDigestHtml(){
   }).join('');
 }
 
+function viewDigest(){
+  /* 📻 每日播报 — 琥珀来信 + 今日笔记速览 + 睡前小结，全部集中在这里 */
+  const inbox=inboxHtml();
+  const digest=todayDigestHtml();
+  return `
+  <div class="card" style="background:linear-gradient(135deg,#eaf3ff,#fff0f6);border-color:#d8e6ff">
+    <h3>📻 每日播报 <span class="sub">${todayStr()} · 琥珀的每日推送/速览都在这里，不在 WorkBuddy 对话里</span></h3>
+    <div class="sub" style="margin-bottom:8px">自动把每日推送（含工作buddy触发的新闻联播/AI日报/财务日报）、笔记摘要、睡前小结合并显示在本机。</div>
+    <div style="margin-bottom:8px"><button class="btn sm ghost" onclick="fetchPushes().then(()=>render())">🔄 手动拉取琥珀来信</button></div>
+  </div>
+  ${inbox || ''}
+  <div class="card today-digest" style="margin-top:14px">
+    <h3>📰 今日笔记速览 <span class="sub">今天日期的「笔记」要点直接汇总</span>
+      <button class="btn sm ghost" onclick="curView='research';render()" style="margin-left:auto">查看科研/学习笔记 →</button>
+    </h3>
+    ${digest}
+  </div>
+  <div class="card" style="margin-top:14px;background:#fff8f0;border-color:#ffd98a">
+    <h3>💡 为什么要独立出来？</h3>
+    <div class="sub">按你要求：「每日提醒的内容不要加到科研/学习里面」。这里只放"每日"性质的内容（来信/速览/睡前），更清爽。科研/学习专注文献台账/科研任务/灵感和原文笔记。</div>
+  </div>`;
+}
+
 function viewOverview(){
   const w=state.weekly, b=state.budget;
   const used=b.personal+b.company+b.other;
   const undone=state.tasksAll.filter(x=>!x.done).length;
   const due=nearestDue();
   return `
-  ${inboxHtml()}
-  <div class="card today-digest"><h3>📰 今日速览 <span class="sub">${todayStr()} · 工作buddy推送的内容也直接显示在这里</span> <button class="btn sm ghost" onclick="curView='research';render()">查看全部 →</button></h3>
-    ${todayDigestHtml()}
-  </div>
   <div class="grid g4">
     <div class="card"><h3>🟡 等级</h3><div class="big">LV${state.level}</div><div class="sub">XP ${state.xp}/${state.xpToNext}</div></div>
     <div class="card"><h3>🪙 木币</h3><div class="big">${state.mucoins}</div><div class="sub">完成行动可赚取</div></div>
@@ -1000,7 +1028,7 @@ function viewResearch(){
       <div class="sub" style="margin-top:8px">点链接在手机/电脑打开；听完回来跟我说「文献 齐昊《XX》」或「笔记 标题 | 要点1；要点2 | 链接」即可收录要点笔记。</div>
     </div>
     <div class="card" style="margin-top:14px"><h3>📒 内容笔记（要点 + 跳转链接）</h3>
-      <div style="margin-bottom:8px"><button class="btn sm" onclick="App.openNote()">➕ 添加笔记</button></div>
+      <div style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="App.openNote()">➕ 添加笔记</button><button class="btn sm ghost" onclick="curView='digest';render()">📻 看今日速览</button></div>
       ${notesHtml||'<div class="empty">还没有笔记。对琥珀说「笔记 标题 | 要点1；要点2 | 链接」即可生成<b>要点笔记</b>（链接可留空，默认看要点即可）。</div>'}
     </div>`;
 }
