@@ -28,7 +28,28 @@
   .side{width:188px;flex:0 0 188px;background:rgba(255,255,255,.78);backdrop-filter:blur(8px);
     border-radius:20px;box-shadow:var(--shadow);padding:16px 12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;
     transition:width .25s ease,flex-basis .25s ease,padding .25s ease,opacity .25s ease}
+  /* 侧栏收起机制 — 桌面: .side.collapsed  */
   .side.collapsed{width:0;flex:0 0 0;padding:0;opacity:0;pointer-events:none;margin-right:-14px}
+  /* 侧栏收起机制 — 纯 CSS 驱动（label for=sideToggleInput 切换 checkbox:checked） */
+  .side-toggle-cb{position:fixed;left:-9999px;top:-9999px;width:36px;height:36px;opacity:0;pointer-events:none}
+  /* 桌面：checked -> 收起；菜单按钮响应 */
+  #sideToggleInput:not(:checked) ~ .app .side{width:188px;flex:0 0 188px;opacity:1;pointer-events:auto}
+  #sideToggleInput:checked ~ .app .side{width:0;flex:0 0 0;padding:0;opacity:0;pointer-events:none;margin-right:-14px}
+  #sideToggleInput:checked ~ .app .side .logo,
+  #sideToggleInput:checked ~ .app .side .side-foot,
+  #sideToggleInput:checked ~ .app .side .nav-text{display:none}
+  #sideToggleInput:not(:checked) ~ .app .menu-btn{background:var(--blue-soft);color:var(--blue);animation:none}
+  #sideToggleInput:checked ~ .app .menu-btn{background:#fff;border:2px solid var(--blue);animation:menubob 1.6s ease-in-out infinite}
+  /* 手机(<640px)：切到 .side.open */
+  @media(max-width:640px){
+    .app{padding:0 8px}
+    .side{position:fixed;top:14px;left:14px;bottom:14px;width:240px;flex:0 0 240px;z-index:100;box-shadow:0 12px 36px rgba(40,46,70,.25);
+      transform:translateX(-260px);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .2s ease;height:auto}
+    .side.open{transform:translateX(0);opacity:1;pointer-events:auto}
+    .side.collapsed{transform:translateX(-260px);opacity:0;pointer-events:none}
+    /* 手机版：用 checkbox 同驱 .side.open */
+    #sideToggleInput:checked ~ .app .side{transform:translateX(0);opacity:1;pointer-events:auto}
+  }
   .side .nav-text{display:inline-block;white-space:nowrap;transition:opacity .15s ease}
   .side.collapsed .logo,.side.collapsed .side-foot,.side.collapsed .nav-text{display:none}
   .side.collapsed .nav-btn{padding:10px 0;justify-content:center}
@@ -50,14 +71,6 @@
   /* 手机抽屉遮罩 */
   .side-mask{position:fixed;inset:0;background:rgba(40,46,70,.45);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s ease}
   .side-mask.show{opacity:1;pointer-events:auto}
-  /* 手机版：侧栏变成抽屉（<640px） */
-  @media(max-width:640px){
-    .app{padding:0 8px}
-    .side{position:fixed;top:14px;left:14px;bottom:14px;width:240px;flex:0 0 240px;z-index:100;box-shadow:0 12px 36px rgba(40,46,70,.25);
-      transform:translateX(-260px);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .2s ease;height:auto}
-    .side.open{transform:translateX(0);opacity:1;pointer-events:auto}
-    .side.collapsed{transform:translateX(-260px);opacity:0;pointer-events:none}
-  }
   @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
   .logo b{font-size:15px}
   .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
@@ -205,9 +218,11 @@
 </style>
 </head>
 <body>
+<!-- 纯 CSS toggle：菜单按钮 ☰ = label，输入框 = 复选框，状态即布局 -->
+<input type="checkbox" id="sideToggleInput" class="side-toggle-cb" aria-hidden="true" />
 <div class="app">
   <!-- 手机抽屉遮罩 -->
-  <div class="side-mask" id="sideMask" onclick="App.toggleSide(false)"></div>
+  <div class="side-mask" id="sideMask" onclick="if(window.App&&App.toggleSide){App.toggleSide(false)}"></div>
   <!-- 侧边栏 -->
   <aside class="side" id="side">
     <button class="side-close" id="sideClose" onclick="App.toggleSide(false)" title="收起侧栏">✕</button>
@@ -233,37 +248,7 @@
   <!-- 主区 -->
   <section class="main">
     <div class="topbar">
-      <button class="menu-btn" id="menuBtn" onclick="
-        (function(){
-          try{
-            var s=document.getElementById('side');
-            var mask=document.getElementById('sideMask');
-            var isMob=window.matchMedia&amp;&amp;window.matchMedia('(max-width:640px)').matches;
-            if(isMob){
-              var open=(sessionStorage.getItem('hupo_side_open')==='1');
-              var no=!open;
-              sessionStorage.setItem('hupo_side_open',no?'1':'0');
-              if(s)s.classList.toggle('open',no);
-              if(mask)mask.classList.toggle('show',no);
-              document.body.classList.toggle('side-open-mobile',no);
-              if(typeof toast==='function')toast(no?'已展开侧栏':'已收起侧栏');
-            }else{
-              var cur=(localStorage.getItem('hupo_side_collapsed')==='1');
-              var n=!cur;
-              localStorage.setItem('hupo_side_collapsed',n?'1':'');
-              if(s)s.classList.toggle('collapsed',n);
-              document.body.classList.toggle('side-collapsed-desktop',n);
-              if(mask)mask.classList.remove('show');
-              if(typeof toast==='function')toast(n?'已收起侧栏':'已展开侧栏');
-            }
-            if(typeof console!=='undefined')console.log('[menu-btn] toggle -&gt;',n||no);
-          }catch(err){
-            if(typeof console!=='undefined')console.error('[menu-btn] fatal:',err);
-            alert('菜单按钮执行失败：'+(err&amp;&amp;err.message?err.message:err)+'\\n请截图发给我');
-          }
-          return false;
-        })();
-      " title="显示/收起侧栏">☰</button>
+      <label for="sideToggleInput" class="menu-btn" id="menuBtn" title="显示/收起侧栏（点击切换 ☰）">☰</label>
       <div class="title" id="viewTitle">工作台概览</div>
       <div class="stat clock" id="clock">--</div>
       <div class="stat count" id="countdown">⏰ 暂无倒计时提醒</div>
@@ -768,11 +753,13 @@ function summaryText(){
 let curView='overview';
 const TITLES={overview:'工作台概览',digest:'📻 每日播报',chat:'与琥珀对话',goals:'目标进度',tasks:'待办任务',research:'科研 / 学习',finance:'财务管理',exercise:'运动健康',skills:'技能中心',photos:'相册',review:'复盘系统',ach:'成就墙'};
 
-/* 侧栏展开/收起：手机用抽屉，桌面用收起/展开。状态持久化（手机模式下不记忆）。 */
+/* 侧栏展开/收起：手机用抽屉，桌面用收起/展开。状态持久化（手机模式下不记忆）。
+   此函数主要保证 .side/.mask class 与 #sideToggleInput 同步（CSS 已驱动主切换，这里做兜底兼容）。 */
 function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
 function applySide(){
   const side=document.getElementById('side'); if(!side) return;
   const mask=document.getElementById('sideMask');
+  const cb=document.getElementById('sideToggleInput');
   const mobile=isMobile();
   if(mobile){
     const open=(sessionStorage.getItem('hupo_side_open')==='1');
@@ -781,6 +768,12 @@ function applySide(){
     document.body.classList.remove('side-collapsed-desktop','side-open-mobile');
     if(open) document.body.classList.add('side-open-mobile');
     if(mask) mask.classList.toggle('show', open);
+    if(cb){
+      if(cb.checked!==open){
+        // 用 setProperty 绕过 jQ-like，但要避免死循环——直接赋值不 dispatch
+        cb.checked=open;
+      }
+    }
   }else{
     const collapsed=(localStorage.getItem('hupo_side_collapsed')==='1');
     side.classList.toggle('collapsed', collapsed);
@@ -788,6 +781,7 @@ function applySide(){
     document.body.classList.remove('side-open-mobile');
     document.body.classList.toggle('side-collapsed-desktop', collapsed);
     if(mask) mask.classList.remove('show');
+    if(cb && cb.checked!==collapsed) cb.checked=collapsed;
   }
 }
 
@@ -1189,6 +1183,42 @@ function syncFavicon(href){
 }
 window.addEventListener('DOMContentLoaded', loadAvatar);
 window.addEventListener('DOMContentLoaded', applySide);
+/* 纯 CSS toggle：checkbox 状态由 <label> 切换，CSS 直接驱动 .side 收起/展开。
+   这里挂 onchange 只是为了把状态持久化到 localStorage，刷新后能恢复。 */
+window.addEventListener('DOMContentLoaded', function(){
+  const cb=document.getElementById('sideToggleInput');
+  if(!cb) return;
+  // 恢复持久化状态（仅桌面模式持久化，手机每次刷新都重置为收起）
+  const isMob=window.matchMedia&&window.matchMedia('(max-width:640px)').matches;
+  if(!isMob){
+    const collapsed=localStorage.getItem('hupo_side_collapsed')==='1';
+    cb.checked=collapsed;
+  }else{
+    cb.checked=false; // 手机模式：默认收起
+  }
+  // 状态变化时：CSS 自动切 .side，这里只同步 localStorage + class（保持与 App 兼容）
+  cb.addEventListener('change', function(){
+    const isMob2=window.matchMedia&&window.matchMedia('(max-width:640px)').matches;
+    const s=document.getElementById('side');
+    const mask=document.getElementById('sideMask');
+    if(isMob2){
+      // 手机：checked=打开；不持久化
+      if(s)s.classList.toggle('open', cb.checked);
+      if(mask)mask.classList.toggle('show', cb.checked);
+      document.body.classList.toggle('side-open-mobile', cb.checked);
+      sessionStorage.setItem('hupo_side_open', cb.checked?'1':'0');
+      if(typeof toast==='function')toast(cb.checked?'已展开侧栏':'已收起侧栏');
+    }else{
+      // 桌面：checked=收起；持久化
+      localStorage.setItem('hupo_side_collapsed', cb.checked?'1':'');
+      if(s)s.classList.toggle('collapsed', cb.checked);
+      document.body.classList.toggle('side-collapsed-desktop', cb.checked);
+      if(mask)mask.classList.remove('show');
+      if(typeof toast==='function')toast(cb.checked?'已收起侧栏':'已展开侧栏');
+    }
+    try{ console.log('[sideToggleInput] checked=', cb.checked); }catch(_){}
+  });
+});
 window.addEventListener('DOMContentLoaded', ()=>{ if(['github','gitee'].includes(syncProvider)) fetchPushes(); });
 window.addEventListener('DOMContentLoaded', ()=>{
   /* 菜单按钮备份：除了 inline onclick 之外，再绑一次 addEventListener，防 inline 被劫持或被某些扩展拦截 */
@@ -1249,20 +1279,16 @@ const App = {
   syncNow(){ setSyncStatus('syncing'); syncPush(); setTimeout(syncPull, 600); toast('已触发同步'); },
   openData(){ DataModal.open(); },
   markPush(key){ key=decodeURIComponent(key); if(!(state.readPush||[]).includes(key)){ if(!state.readPush)state.readPush=[]; state.readPush.push(key); save(); } render(); },
-  /* 侧栏显示/收起；手机传入 force=true/false 时强制开/关，不传则翻转 */
+  /* 侧栏显示/收起；手机传入 force=true/false 时强制开/关，不传则翻转。
+     App.toggleSide 现在通过翻转 #sideToggleInput 让 CSS 接管，避免逻辑反 + 不被 onchange 误触发。
+     不再操作 localStorage 或 DOM class——onchange 监听器会接住并落地（桌面）/sessionStorage（手机）。 */
   toggleSide(force){
-    if(isMobile()){
-      const cur=(sessionStorage.getItem('hupo_side_open')==='1');
-      const next=(force===true)?true:(force===false?false:!cur);
-      sessionStorage.setItem('hupo_side_open', next?'1':'0');
-    }else{
-      // 桌面：localStorage 语义 = '1' = 收起 / '' = 展开
-      const cur=(localStorage.getItem('hupo_side_collapsed')==='1');
-      const next=(force===true)?true:(force===false?false:!cur);
-      // next 与 cur 同语义：cur=true(已收起) → next=true(期望收起) → 写 '1'
-      localStorage.setItem('hupo_side_collapsed', next?'1':'');
-    }
-    applySide();
+    const cb=document.getElementById('sideToggleInput');
+    if(!cb){ applySide(); return; }
+    if(force===true) cb.checked=true;
+    else if(force===false) cb.checked=false;
+    else cb.checked=!cb.checked;
+    cb.dispatchEvent(new Event('change'));
   },
   openNote(){
     openModal(`<h2>📒 添加内容笔记 <button class="close" onclick="closeModal()">✕</button></h2>
