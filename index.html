@@ -1163,9 +1163,18 @@ const DataModal={
     const t=document.getElementById('ghTokenIn').value.trim();
     if(!t){toast('请先粘贴令牌');return;}
     const info=document.getElementById('ghTokenInfo'); if(info) info.textContent='验证中…';
+    // 诊断：显示捕获到的令牌前缀+长度（中间省略），方便确认是不是粘错或过期
+    const preview = t.length>12 ? t.slice(0,4)+'…'+t.slice(-4)+'（共 '+t.length+' 字符）' : t+'（共 '+t.length+' 字符）';
+    if(info) info.innerHTML='已捕获令牌：<code>'+escapeHtml(preview)+'</code>，发送验证…';
     try{
       const r=await fetch(GH_API+'/user',{headers:{'Authorization':'token '+t,'Accept':'application/vnd.github+json'}});
-      if(!r.ok){ if(info) info.textContent='❌ 令牌无效（HTTP '+r.status+'）'; return; }
+      if(!r.ok){
+        // 读取 GitHub 返回的真实错误原因
+        let detail='';
+        try{ const ej=await r.json(); detail=ej.message||ej.error||''; }catch(_){}
+        if(info) info.innerHTML='❌ HTTP '+r.status+' ｜ 令牌前缀：<code>'+escapeHtml(preview)+'</code><br><span style="color:#a55">GitHub 回应：'+escapeHtml(detail||'(无 body)')+'</span><br><span style="color:#888">常见原因：①令牌过期/被撤销（去 GitHub → Settings → Tokens 检查/重发）②粘错了 Gitee 令牌（应以 ghp_ 开头）③浏览器用了缓存（按 Ctrl+Shift+R 强刷）</span>';
+        return;
+      }
       const me=await r.json();
       ghToken=t; localStorage.setItem('hupo_gh_token',t);
       ghOwner=me.login; localStorage.setItem('hupo_gh_owner',ghOwner);
