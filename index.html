@@ -233,7 +233,7 @@
   <!-- 主区 -->
   <section class="main">
     <div class="topbar">
-      <button class="menu-btn" id="menuBtn" onclick="App.toggleSide()" title="显示/收起侧栏">☰</button>
+      <button class="menu-btn" id="menuBtn" onclick="try{App.toggleSide()}catch(e){try{var s=document.getElementById('side');var c=localStorage.getItem('hupo_side_collapsed')==='1';localStorage.setItem('hupo_side_collapsed',c?'':'1');if(s)s.classList.toggle('collapsed',!c);document.body.classList.toggle('side-collapsed-desktop',!c);}catch(_){}};return false" title="显示/收起侧栏">☰</button>
       <div class="title" id="viewTitle">工作台概览</div>
       <div class="stat clock" id="clock">--</div>
       <div class="stat count" id="countdown">⏰ 暂无倒计时提醒</div>
@@ -1160,6 +1160,37 @@ function syncFavicon(href){
 window.addEventListener('DOMContentLoaded', loadAvatar);
 window.addEventListener('DOMContentLoaded', applySide);
 window.addEventListener('DOMContentLoaded', ()=>{ if(['github','gitee'].includes(syncProvider)) fetchPushes(); });
+window.addEventListener('DOMContentLoaded', ()=>{
+  /* 菜单按钮备份：除了 inline onclick 之外，再绑一次 addEventListener，防 inline 被劫持或被某些扩展拦截 */
+  const btn=document.getElementById('menuBtn');
+  if(btn && !btn.dataset.bound){
+    btn.dataset.bound='1';
+    btn.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      try{ App.toggleSide(); }
+      catch(err){
+        /* 兜底：直接操作 DOM（不依赖 App 对象） */
+        try{
+          const s=document.getElementById('side'); const mask=document.getElementById('sideMask');
+          if(isMobile()){
+            const open=sessionStorage.getItem('hupo_side_open')==='1';
+            sessionStorage.setItem('hupo_side_open',(!open)?'1':'0');
+            if(s) s.classList.toggle('open', !open);
+            if(mask) mask.classList.toggle('show', !open);
+            document.body.classList.toggle('side-open-mobile', !open);
+          } else {
+            const collapsed=localStorage.getItem('hupo_side_collapsed')==='1';
+            localStorage.setItem('hupo_side_collapsed', collapsed?'':'1');
+            if(s) s.classList.toggle('collapsed', !collapsed);
+            document.body.classList.toggle('side-collapsed-desktop', !collapsed);
+            if(mask) mask.classList.remove('show');
+          }
+          toast('已 '+(localStorage.getItem('hupo_side_collapsed')==='1'?'收起':'展开')+' 侧栏');
+        }catch(e2){ console.error('menu-btn click err', err, e2); toast('点击无反应，请 Ctrl+Shift+R 强刷'); }
+      }
+    });
+  }
+});
 window.addEventListener('resize', applySide);
 
 /* ============ 事件绑定 ============ */
