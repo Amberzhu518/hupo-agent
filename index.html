@@ -150,6 +150,25 @@
   /* 今日速览卡片 */
   .today-digest h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .today-digest h3 .sub{flex:1;font-weight:400;margin-left:2px}
+  /* 琥珀来信（云端推送卡片） */
+  .inbox{border-color:var(--pink);background:linear-gradient(180deg,rgba(255,158,196,.10),rgba(255,255,255,.6))}
+  .inbox-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .inbox-head h3{margin:0}
+  .inbox-head .sub{flex:1;font-weight:400;color:var(--text-soft);font-size:12px}
+  .inbox-cat{margin:12px 0 6px;font-size:14px;color:var(--text)}
+  .inbox-list{list-style:none;margin:0;padding:0}
+  .inbox-item{padding:10px 0;border-top:1px dashed var(--line);position:relative}
+  .inbox-item:first-child{border-top:0}
+  .inbox-item.read{opacity:.55}
+  .inbox-title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+  .inbox-point{font-size:13px;color:var(--text);margin-top:3px;line-height:1.5}
+  .inbox-why{font-size:12px;color:var(--text-soft);margin-top:3px}
+  .inbox-link{display:inline-block;margin-top:5px;font-size:12px;color:var(--blue);text-decoration:none}
+  .inbox-mark{position:absolute;right:0;top:10px;font-size:11px;color:var(--blue);cursor:pointer;user-select:none}
+  .inbox-item.read .inbox-mark{color:var(--text-soft)}
+  .inbox-rem{font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;padding:8px 0;position:relative}
+  .inbox-rem.read{opacity:.6}
+  .dot-new{font-size:10px;background:#e0518a;color:#fff;border-radius:6px;padding:1px 6px;font-weight:500}
   .digest-item{padding:10px 0;border-top:1px dashed var(--line)}
   .digest-item:first-child{border-top:0;padding-top:4px}
   .digest-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -269,6 +288,7 @@ const DEFAULT = {
   literature:[], research:[], ideas:[],
   finance:[], exercise:[], reviews:[], summaries:[],
   photos:[], notes:[],
+  readPush:[],
   billRemind:false, _pendingBill:[],
   achievements:[{id:'first_study',name:'初学乍练',desc:'完成第一次学习打卡',got:false},
                 {id:'week_study',name:'一周不辍',desc:'一周学习打卡满7次',got:false},
@@ -394,11 +414,52 @@ function unb64u(b64){ return decodeURIComponent(escape(atob((b64||'').replace(/\
 /* ============ 云端中转同步（GitHub，电脑关机也能用） ============ */
 let ghToken = localStorage.getItem('hupo_gh_token') || '';
 let ghOwner = localStorage.getItem('hupo_gh_owner') || '';
+let pushCache = null; // 云端推送（琥珀来信）缓存：{digest:{cat:[...]}, reminder:{text,generatedAt}}
 let ghDataRepo = 'hupo-agent-data';
 let ghSyncPath = 'sync/hupo-agent-sync.json';
 let ghFileSha = localStorage.getItem('hupo_gh_sha') || '';
 const GH_API='https://api.github.com';
 function ghHeaders(extra){ const h={'Authorization':'token '+ghToken,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'hupo'}; if(extra) Object.assign(h,extra); return h; }
+
+// ============ 云端推送（琥珀来信）拉取 ============
+// 推送文件独立于 state，存于 hupo-agent-data 仓库的 push/YYYY-MM-DD.json，避免整文件 state 覆盖冲突
+async function fetchPushes(){
+  if(syncProvider!=='github' && syncProvider!=='gitee'){ return; }
+  try{
+    let listUrl, headers;
+    if(syncProvider==='github'){
+      if(!ghToken||!ghOwner){ return; }
+      listUrl='https://api.github.com/repos/'+ghOwner+'/'+ghDataRepo+'/contents/push';
+      headers=ghHeaders();
+    } else {
+      if(!gtToken||!gtOwner){ return; }
+      listUrl=GT_API+'/repos/'+gtOwner+'/'+gtDataRepo+'/contents/push?access_token='+gtToken;
+      headers={};
+    }
+    const r=await fetch(listUrl,{headers});
+    if(!r.ok){ pushCache={digest:{},reminder:null}; return; }
+    const arr=await r.json();
+    const names=(Array.isArray(arr)?arr:[]).map(x=>x.name||'').filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort().slice(-7);
+    const out={digest:{},reminder:null};
+    for(const n of names){
+      try{
+        let fr, fj;
+        if(syncProvider==='github'){
+          fr=await fetch('https://api.github.com/repos/'+ghOwner+'/'+ghDataRepo+'/contents/push/'+n, {headers});
+          if(!fr.ok) continue; fj=await fr.json();
+        } else {
+          fr=await fetch(GT_API+'/repos/'+gtOwner+'/'+gtDataRepo+'/contents/push/'+n+'?access_token='+gtToken);
+          if(!fr.ok) continue; fj=await fr.json();
+        }
+        const d=JSON.parse(unb64u(fj.content));
+        Object.keys(d.digest||{}).forEach(c=>{ out.digest[c]=(out.digest[c]||[]).concat(d.digest[c]||[]); });
+        if(d.reminder) out.reminder=d.reminder;
+      }catch(e){}
+    }
+    pushCache=out;
+    if(curView==='overview') render();
+  }catch(e){ pushCache={digest:{},reminder:null}; }
+}
 function setProvider(p){
   syncProvider=p; localStorage.setItem('hupo_sync_provider',p);
   const gb=document.getElementById('giteeBox'); if(gb) gb.style.display = p==='gitee'?'':'none';
@@ -716,6 +777,41 @@ function render(){
   bindView();
 }
 
+function inboxHtml(){
+  if(!pushCache) return '';
+  const d=pushCache;
+  const cats=['新闻联播','AI日报','财务日报'].filter(c=>(d.digest[c]||[]).length);
+  const hasRem=!!d.reminder;
+  if(!cats.length && !hasRem) return '';
+  const emojiOf=c=>c==='新闻联播'?'📺':c==='AI日报'?'🤖':c==='财务日报'?'💹':'📌';
+  const read=(state.readPush||[]);
+  let h='<div class="card inbox"><div class="inbox-head"><h3>📨 琥珀来信</h3><span class="sub">来自琥珀的每日推送 · 不在 WorkBuddy，直接在 agent 里看</span></div>';
+  cats.forEach(c=>{
+    const items=(d.digest[c]||[]).filter(it=>it && it.title);
+    if(!items.length) return;
+    h+='<div class="inbox-cat">'+emojiOf(c)+' <b>'+escapeHtml(c)+'</b></div><ul class="inbox-list">';
+    items.forEach(it=>{
+      const key=it.title; const isRead=read.includes(key);
+      h+='<li class="inbox-item'+(isRead?' read':'')+'"><div class="inbox-title">'+escapeHtml(it.title)+
+         (isRead?'':'<span class="dot-new">新</span>')+'</div>'+
+         (it.point?'<div class="inbox-point">'+escapeHtml(it.point)+'</div>':'')+
+         (it.why?'<div class="inbox-why">💡 '+escapeHtml(it.why)+'</div>':'')+
+         (it.link?'<a class="inbox-link" href="'+encodeURI(it.link)+'" target="_blank" rel="noopener">🔗 详情</a>':'')+
+         '<span class="inbox-mark" onclick="App.markPush(\''+encodeURIComponent(key)+'\')">'+(isRead?'已读 ✓':'标记已读')+'</span></li>';
+    });
+    h+='</ul>';
+  });
+  if(hasRem){
+    const rem=d.reminder; const rkey='reminder|'+(rem.generatedAt||'');
+    const isRead=read.includes(rkey);
+    h+='<div class="inbox-cat">🌙 <b>睡前小结</b></div>'+
+       '<div class="inbox-rem'+(isRead?' read':'')+'">'+escapeHtml(rem.text||'')+
+       '<span class="inbox-mark" onclick="App.markPush(\''+encodeURIComponent(rkey)+'\')">'+(isRead?'已读 ✓':'标记已读')+'</span></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
 function todayDigestHtml(){
   /* 显示「今天」的新闻联播 / AI日报 / 财务日报 笔记（工作buddy 推送的内容直接同步到这里） */
   const DIGEST_CATS=['新闻联播','AI日报','财务日报'];
@@ -737,6 +833,7 @@ function viewOverview(){
   const undone=state.tasksAll.filter(x=>!x.done).length;
   const due=nearestDue();
   return `
+  ${inboxHtml()}
   <div class="card today-digest"><h3>📰 今日速览 <span class="sub">${todayStr()} · 工作buddy推送的内容也直接显示在这里</span> <button class="btn sm ghost" onclick="curView='research';render()">查看全部 →</button></h3>
     ${todayDigestHtml()}
   </div>
@@ -1034,6 +1131,7 @@ function syncFavicon(href){
 }
 window.addEventListener('DOMContentLoaded', loadAvatar);
 window.addEventListener('DOMContentLoaded', applySide);
+window.addEventListener('DOMContentLoaded', ()=>{ if(['github','gitee'].includes(syncProvider)) fetchPushes(); });
 window.addEventListener('resize', applySide);
 
 /* ============ 事件绑定 ============ */
@@ -1060,6 +1158,7 @@ const App = {
   delPhoto(i){state.photos.splice(i,1);save();render();},
   syncNow(){ setSyncStatus('syncing'); syncPush(); setTimeout(syncPull, 600); toast('已触发同步'); },
   openData(){ DataModal.open(); },
+  markPush(key){ key=decodeURIComponent(key); if(!(state.readPush||[]).includes(key)){ if(!state.readPush)state.readPush=[]; state.readPush.push(key); save(); } render(); },
   /* 侧栏显示/收起；手机传入 force=true/false 时强制开/关，不传则翻转 */
   toggleSide(force){
     if(isMobile()){
