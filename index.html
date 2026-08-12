@@ -40,15 +40,39 @@
   #sideToggleInput:checked ~ .app .side .nav-text{display:none}
   #sideToggleInput:not(:checked) ~ .app .menu-btn{background:var(--blue-soft);color:var(--blue);animation:none}
   #sideToggleInput:checked ~ .app .menu-btn{background:#fff;border:2px solid var(--blue);animation:menubob 1.6s ease-in-out infinite}
-  /* 手机(<640px)：切到 .side.open */
+  /* 手机(<640px)：抽屉 + 浮层；用 transform translate3d 强制 GPU 合成，兼容 iOS Safari */
   @media(max-width:640px){
-    .app{padding:0 8px}
-    .side{position:fixed;top:14px;left:14px;bottom:14px;width:240px;flex:0 0 240px;z-index:100;box-shadow:0 12px 36px rgba(40,46,70,.25);
-      transform:translateX(-260px);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .2s ease;height:auto}
-    .side.open{transform:translateX(0);opacity:1;pointer-events:auto}
-    .side.collapsed{transform:translateX(-260px);opacity:0;pointer-events:none}
-    /* 手机版：用 checkbox 同驱 .side.open */
-    #sideToggleInput:checked ~ .app .side{transform:translateX(0);opacity:1;pointer-events:auto}
+    .app{padding:0}
+    .side{
+      position:fixed;top:0;left:0;bottom:0;width:78%;max-width:320px;
+      z-index:200;
+      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(245,247,255,.96));
+      backdrop-filter:blur(14px);
+      border-radius:0 24px 24px 0;
+      box-shadow:6px 0 32px rgba(40,46,70,.25);
+      padding:18px 14px;flex-direction:column;gap:6px;overflow:auto;
+      -webkit-transform:translate3d(-100%,0,0);transform:translate3d(-100%,0,0);
+      -webkit-transition:-webkit-transform .3s ease;transition:transform .3s ease;
+      will-change:transform;opacity:1;pointer-events:none;
+    }
+    .side.open{
+      -webkit-transform:translate3d(0,0,0)!important;transform:translate3d(0,0,0)!important;
+      opacity:1;pointer-events:auto;
+    }
+    .side.closed{
+      -webkit-transform:translate3d(-100%,0,0)!important;transform:translate3d(-100%,0,0)!important;
+      opacity:0;pointer-events:none;
+    }
+    /* 手机顶部条：菜单按钮浮在最显眼位置 */
+    .topbar{padding:12px 14px;gap:10px}
+    .menu-btn{width:42px;height:42px;font-size:20px;box-shadow:0 3px 12px rgba(120,140,200,.28)}
+    /* 抽屉内菜单按钮文字更大 */
+    .side .nav-btn{font-size:15px;padding:12px 14px;border-radius:14px}
+    .side .logo{padding:6px 8px 18px}
+    .side .logo b{font-size:16px}
+    .side .logo .ava{width:46px;height:46px;border-radius:14px}
+    /* 抽屉侧栏关闭按钮（顶部右上） */
+    .side-close{position:sticky;top:0;width:36px;height:36px;font-size:18px;align-self:flex-end}
   }
   .side .nav-text{display:inline-block;white-space:nowrap;transition:opacity .15s ease}
   .side.collapsed .logo,.side.collapsed .side-foot,.side.collapsed .nav-text{display:none}
@@ -761,6 +785,17 @@ function applySide(){
   const mask=document.getElementById('sideMask');
   const cb=document.getElementById('sideToggleInput');
   const mobile=isMobile();
+  /* 触发一次自定义事件让 syncSide 也跑；不重复设置 .style 避免冲突 */
+  if(cb && typeof window.__syncSide==='function'){
+    if(mobile){
+      const open=(sessionStorage.getItem('hupo_side_open')==='1');
+      if(cb.checked!==open){ cb.checked=open; window.__syncSide(); }
+    }else{
+      const collapsed=(localStorage.getItem('hupo_side_collapsed')==='1');
+      if(cb.checked!==collapsed){ cb.checked=collapsed; window.__syncSide(); }
+    }
+    return;
+  }
   if(mobile){
     const open=(sessionStorage.getItem('hupo_side_open')==='1');
     side.classList.toggle('open', open);
@@ -768,12 +803,7 @@ function applySide(){
     document.body.classList.remove('side-collapsed-desktop','side-open-mobile');
     if(open) document.body.classList.add('side-open-mobile');
     if(mask) mask.classList.toggle('show', open);
-    if(cb){
-      if(cb.checked!==open){
-        // 用 setProperty 绕过 jQ-like，但要避免死循环——直接赋值不 dispatch
-        cb.checked=open;
-      }
-    }
+    if(cb) cb.checked=open;
   }else{
     const collapsed=(localStorage.getItem('hupo_side_collapsed')==='1');
     side.classList.toggle('collapsed', collapsed);
@@ -781,7 +811,7 @@ function applySide(){
     document.body.classList.remove('side-open-mobile');
     document.body.classList.toggle('side-collapsed-desktop', collapsed);
     if(mask) mask.classList.remove('show');
-    if(cb && cb.checked!==collapsed) cb.checked=collapsed;
+    if(cb) cb.checked=collapsed;
   }
 }
 
@@ -1196,28 +1226,61 @@ window.addEventListener('DOMContentLoaded', function(){
   }else{
     cb.checked=false; // 手机模式：默认收起
   }
-  // 状态变化时：CSS 自动切 .side，这里只同步 localStorage + class（保持与 App 兼容）
-  cb.addEventListener('change', function(){
-    const isMob2=window.matchMedia&&window.matchMedia('(max-width:640px)').matches;
+  /* 直接操作 .side 的 inline style（绕开所有 CSS 选择器优先级、避免 iOS Safari transform bug） */
+  function syncSide(){
     const s=document.getElementById('side');
     const mask=document.getElementById('sideMask');
+    if(!s) return;
+    const isMob2=window.matchMedia&&window.matchMedia('(max-width:640px)').matches;
     if(isMob2){
-      // 手机：checked=打开；不持久化
-      if(s)s.classList.toggle('open', cb.checked);
-      if(mask)mask.classList.toggle('show', cb.checked);
-      document.body.classList.toggle('side-open-mobile', cb.checked);
+      if(cb.checked){
+        // 展开：推到屏幕内（用 translate3d 触发 GPU 合成 + iOS 强制重绘）
+        s.style.transform='translate3d(0,0,0)';
+        s.style.webkitTransform='translate3d(0,0,0)';
+        s.style.opacity='1';
+        s.style.pointerEvents='auto';
+        s.classList.add('open');
+        s.classList.remove('collapsed','closed');
+        if(mask){ mask.classList.add('show'); mask.style.pointerEvents='auto'; mask.style.opacity='1'; mask.style.display='block'; }
+        document.body.classList.add('side-open-mobile');
+        document.body.style.overflow='hidden'; // 防止背景滚动
+      }else{
+        // 收起：推出去
+        s.style.transform='translate3d(-100%,0,0)';
+        s.style.webkitTransform='translate3d(-100%,0,0)';
+        s.style.opacity='0';
+        s.style.pointerEvents='none';
+        s.classList.remove('open');
+        s.classList.add('closed');
+        if(mask){ mask.classList.remove('show'); mask.style.pointerEvents='none'; mask.style.opacity='0'; setTimeout(()=>{mask.style.display='none'}, 300); }
+        document.body.classList.remove('side-open-mobile');
+        document.body.style.overflow='';
+      }
       sessionStorage.setItem('hupo_side_open', cb.checked?'1':'0');
       if(typeof toast==='function')toast(cb.checked?'已展开侧栏':'已收起侧栏');
     }else{
-      // 桌面：checked=收起；持久化
+      // 桌面：用 .collapsed
       localStorage.setItem('hupo_side_collapsed', cb.checked?'1':'');
-      if(s)s.classList.toggle('collapsed', cb.checked);
+      s.classList.toggle('collapsed', cb.checked);
+      s.classList.remove('open','closed');
       document.body.classList.toggle('side-collapsed-desktop', cb.checked);
-      if(mask)mask.classList.remove('show');
+      if(mask) mask.classList.remove('show');
+      // 清掉手机 inline style（重要：避免桌面残留）
+      s.style.transform='';
+      s.style.webkitTransform='';
+      s.style.opacity='';
+      s.style.pointerEvents='';
+      document.body.style.overflow='';
       if(typeof toast==='function')toast(cb.checked?'已收起侧栏':'已展开侧栏');
     }
-    try{ console.log('[sideToggleInput] checked=', cb.checked); }catch(_){}
-  });
+    try{ console.log('[sideToggleInput] checked=', cb.checked, 'isMob=', isMob2); }catch(_){}
+  }
+  // 初始同步
+  syncSide();
+  // 状态变化时
+  cb.addEventListener('change', syncSide);
+  /* 全局暴露给 applySide 用 */
+  window.__syncSide=syncSide;
 });
 window.addEventListener('DOMContentLoaded', ()=>{ if(['github','gitee'].includes(syncProvider)) fetchPushes(); });
 window.addEventListener('DOMContentLoaded', ()=>{
