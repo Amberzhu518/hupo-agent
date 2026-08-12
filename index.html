@@ -39,7 +39,7 @@
   @media(max-width:640px){
     .app{padding:0}
     .side{
-      position:fixed;top:0;left:0;bottom:0;width:78%;max-width:320px;
+      position:fixed;top:0;left:0;bottom:0;width:50%;max-width:340px;
       z-index:200;
       background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(245,247,255,.97));
       backdrop-filter:blur(14px);
@@ -230,6 +230,23 @@
   .modal video{width:100%;border-radius:12px;background:#000}
   .canvasprev{width:100%;border-radius:12px;border:1px solid var(--line);margin-top:10px;background:#fff}
   @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
+/* 通用能力栏 Cap（全模块统一：拍照/语音/联网检索/导入导出） */
+.capbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.capbar .btn{margin:0}
+.photos .photo .cap{padding:6px 8px;font-size:11px;color:var(--text-soft)}
+/* 打卡热力图 */
+.heat{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.heat>div{border-radius:4px}
+/* 手机底部快捷导航（对标「琥珀的日常工作台」mobilenav） */
+.mobilenav{display:none}
+@media(max-width:640px){
+  .mobilenav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:140;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+  .mobilenav button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-soft);font-size:10px;padding:5px 4px;min-width:48px;min-height:44px;cursor:pointer;font-weight:600}
+  .mobilenav button.on{color:var(--blue)}
+  .view{padding-bottom:66px}
+  .side-mask{z-index:150}
+  .side{z-index:200}
+}
 </style>
 </head>
 <body>
@@ -278,6 +295,7 @@
     <div class="view" id="view"></div>
   </section>
 </div>
+<div class="mobilenav" id="mobilenav"></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileJson" accept="application/json" style="display:none" />
 <input type="file" id="fileXlsx" accept=".xlsx,.xls" style="display:none" />
@@ -809,7 +827,11 @@ function render(){
   else if(curView==='photos') v.innerHTML=viewPhotos();
   else if(curView==='review') v.innerHTML=viewReview();
   else if(curView==='ach') v.innerHTML=viewAch();
+  const _cap = (typeof Cap!=='undefined' && Cap.bar) ? Cap.bar({module:curView}) : '';
+  const _att = (typeof Cap!=='undefined' && Cap.attachSection) ? Cap.attachSection(curView) : '';
+  v.innerHTML = _cap + v.innerHTML + _att;
   bindView();
+  if(window.Cap&&Cap._syncNav) Cap._syncNav(curView);
 }
 
 function inboxHtml(){
@@ -936,7 +958,19 @@ function viewOverview(){
       <a class="chip" href="https://news.cctv.com" target="_blank" rel="noopener">📺 央视新闻</a>
     </div>
     <div class="sub" style="margin-top:6px">点任意标签会在新标签打开对应平台/APP网页版；手机上部分会直接唤起对应 APP。</div>
-  </div>`;
+  </div>
+  ${heatmapHtml()}`;
+}
+function heatmapHtml(){
+  const days=70; const today=new Date(); const counts={};
+  const bump=arr=>{ (arr||[]).forEach(o=>{ const d=o&&o.date; if(d){ counts[d]=(counts[d]||0)+1; } }); };
+  bump(state.tasksAll); bump(state.finance); bump(state.exercise); bump(state.reviews);
+  bump(state.research); bump(state.literature); bump(state.ideas); bump(state.notes); bump(state.photos);
+  const max=Math.max(1,...Object.values(counts));
+  const cols=['#eef1f8','#d6e8ff','#9ec9f5','#5b9cf0','#3a6fd0'];
+  let cells='';
+  for(let i=days-1;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); const key=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); const c=counts[key]||0; const lvl=c===0?0:Math.min(4,Math.ceil(c/max*4)); cells+=`<div title="${key}：${c} 次" style="background:${cols[lvl]}"></div>`; }
+  return `<div class="card" style="margin-top:14px"><h3>📅 打卡热力图（近 10 周）</h3><div class="heat">${cells}</div><div class="sub" style="margin-top:6px">颜色越深＝当天记录越活跃（待办 / 收支 / 运动 / 复盘 / 科研 / 笔记 / 相册等）。</div></div>`;
 }
 function bar(label,v,t,cls=''){
   const p=Math.min(100,Math.round(v/t*100));
@@ -990,11 +1024,12 @@ function viewGoals(){
 function viewTasks(){
   const item=(t,i,scope)=>`<div class="item ${t.done?'done':''}">
     <div class="check ${t.done?'on':''}" onclick="App.toggleTask('${scope}',${i})">${t.done?'✓':''}</div>
-    <div class="main">${escapeHtml(t.text)}${t.important?' <span class="tag imp">⭐重要</span>':''}${t.due?` <span class="tag">⏰${fmtDue(t.due)}</span>`:''}<div class="sub">${t.date}</div></div>
+    <div class="main">${escapeHtml(t.text)}${t.important?' <span class="tag imp">⭐重要</span>':''}${t.tag?` <span class="tag">#${escapeHtml(t.tag)}</span>`:''}${t.due?` <span class="tag">⏰${fmtDue(t.due)}</span>`:''}<div class="sub">${t.date}</div></div>
     <span class="btn sm ghost" onclick="App.delTask('${scope}',${i})">删除</span></div>`;
   return `<div class="card"><h3>➕ 新增待办（可带时间，如「明天15:00」）</h3>
     <div class="addbar"><input id="taskIn" placeholder="例如：明天15:00交月度报告" onkeydown="if(event.key==='Enter')App.addTask()"/>
       <input id="taskDue" type="datetime-local" style="max-width:180px"/>
+      <input id="taskTag" placeholder="标签(选填)" style="max-width:110px"/>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft)"><input type="checkbox" id="taskImp"/>重要</label>
       <button class="btn" onclick="App.addTask()">添加</button></div></div>
     <div class="grid g2">
@@ -1021,7 +1056,7 @@ function notesGroupedHtml(){
   Object.keys(map).forEach(c=>{if(CATS.indexOf(c)<0)keys.push(c);});
   if(!keys.length) return '<div class="empty">还没有笔记。对琥珀说「笔记 标题 | 要点1；要点2 | 链接」即可生成<b>要点笔记</b>（链接可留空，默认看要点即可）。</div>';
   const card=(n,i)=>`<div class="note">
-      <div class="note-h"><b>📒 ${escapeHtml(n.title)}</b><span class="sub">${n.date||''}</span>${n.link?`<a class="btn sm ghost" href="${escapeHtml(n.link)}" target="_blank" rel="noopener">🔗 查看原文</a>`:''}<span class="btn sm ghost" onclick="App.del('notes',${i})">删</span></div>
+      <div class="note-h"><b>📒 ${escapeHtml(n.title)}</b>${n.tag?` <span class="tag">#${escapeHtml(n.tag)}</span>`:''}<span class="sub">${n.date||''}</span>${n.link?`<a class="btn sm ghost" href="${escapeHtml(n.link)}" target="_blank" rel="noopener">🔗 查看原文</a>`:''}<span class="btn sm ghost" onclick="App.del('notes',${i})">删</span></div>
       <ol class="note-pts">${renderPoints(n.points)}</ol>
     </div>`;
   return keys.map(c=>`<div style="margin-top:10px"><div style="font-weight:700;color:var(--gold);margin:6px 0 4px">📁 ${escapeHtml(c)} <span class="sub">${map[c].length} 条</span></div>${map[c].map(o=>card(o.n,o.idx)).join('')}</div>`).join('');
@@ -1199,7 +1234,8 @@ const App = {
     const txt=i.value.trim();
     const dueEl=document.getElementById('taskDue'); const dueVal=dueEl&&dueEl.value? new Date(dueEl.value).getTime():null;
     const impEl=document.getElementById('taskImp'); const imp=impEl&&impEl.checked;
-    const item={text:txt,done:false,date:todayStr(),due:dueVal,important:imp};
+    const tagEl=document.getElementById('taskTag'); const tag=tagEl&&tagEl.value.trim();
+    const item={text:txt,done:false,date:todayStr(),due:dueVal,important:imp,tag:tag};
     state.tasksAll.unshift(item); state.tasksToday.unshift(item);
     i.value=''; if(dueEl)dueEl.value=''; if(impEl)impEl.checked=false;
     save(); render(); toast('已添加待办'+(dueVal?'（含提醒）':''));
@@ -1212,6 +1248,7 @@ const App = {
   delPhoto(i){state.photos.splice(i,1);save();render();},
   syncNow(){ setSyncStatus('syncing'); syncPush(); setTimeout(syncPull, 600); toast('已触发同步'); },
   openData(){ DataModal.open(); },
+  go(id){ curView=id; render(); },
   markPush(key){ key=decodeURIComponent(key); if(!(state.readPush||[]).includes(key)){ if(!state.readPush)state.readPush=[]; state.readPush.push(key); save(); } render(); },
   /* 侧栏显示/收起：纯 class 切换（参考「琥珀的日常工作台」）。
      手机：切 .open 抽屉；桌面：切 .collapsed 收起。force=true 强制展开/打开，force=false 强制收起/关闭，不传则翻转。 */
@@ -1246,6 +1283,8 @@ const App = {
       <select id="noteCat">
         <option>新闻联播</option><option>AI日报</option><option>财务日报</option><option>齐昊</option><option>夏鹏</option><option>未分类</option>
       </select>
+      <label>标签（选填，用于归类，如：英语 / 理财 / 周报）</label>
+      <input id="noteTag" placeholder="标签(选填)"/>
       <label>核心要点（每条一行，只写整理后的要点）</label>
       <textarea id="notePts" rows="6" placeholder="1. 写周报 4 个原则让领导主动加薪&#10;2. 先结论后细节&#10;3. 用数据量化成果"></textarea>
       <label>跳转链接（可留空；用于按需查看原文）</label>
@@ -1258,7 +1297,8 @@ const App = {
     const points=(document.getElementById('notePts').value||'').split('\n').map(s=>s.trim().replace(/^[\d]+\.?\s*/,'')).filter(Boolean);
     const link=(document.getElementById('noteLink').value||'').trim();
     const cat=(document.getElementById('noteCat')?document.getElementById('noteCat').value:'')||'未分类';
-    state.notes.unshift({title, points, link, date:todayStr(), cat:cat});
+    const tag=(document.getElementById('noteTag')?document.getElementById('noteTag').value:'').trim();
+    state.notes.unshift({title, points, link, date:todayStr(), cat:cat, tag:tag});
     save(); render(); closeModal(); toast('已保存要点笔记');
   },
   importBill(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.xlsx,.xls,.csv'; inp.onchange=function(e){ const f=e.target.files[0]; if(!f){return;} const r=new FileReader();
@@ -1340,7 +1380,7 @@ function closeCamera(){ if(cameraStream){cameraStream.getTracks().forEach(t=>t.s
 
 /* ============ 弹窗通用 ============ */
 function openModal(html){ document.getElementById('modalRoot').innerHTML=`<div class="modal-mask" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`; }
-function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function closeModal(){ if(window.Cap&&Cap._stream){ try{Cap._stream.getTracks().forEach(t=>t.stop());}catch(e){} Cap._stream=null; } document.getElementById('modalRoot').innerHTML=''; }
 
 /* ============ 数据导入导出 ============ */
 const DataModal={
@@ -1741,6 +1781,143 @@ const Skills={
 };
 window.Skills=Skills;
 
+/* ============ 通用能力 Cap（全模块统一：拍照/语音/联网检索/导入导出） ============ */
+/* 各模块可导入/导出的数据表映射 */
+const CAP_MODULES = {
+  overview:{name:'全部数据', arrays:[['tasksAll','待办'],['finance','收支'],['exercise','运动'],['reviews','复盘'],['research','科研'],['literature','文献'],['ideas','灵感'],['notes','笔记'],['photos','相册']]},
+  tasks:{name:'待办', arrays:[['tasksAll','待办']]},
+  goals:{name:'目标', arrays:[['tasksAll','待办']]},
+  research:{name:'科研/学习', arrays:[['literature','文献'],['research','科研任务'],['ideas','灵感'],['notes','笔记']]},
+  finance:{name:'财务', arrays:[['finance','收支']]},
+  exercise:{name:'运动健康', arrays:[['exercise','运动']]},
+  review:{name:'复盘', arrays:[['reviews','复盘']]},
+  photos:{name:'相册', arrays:[['photos','相册']]},
+  digest:{name:'每日播报', arrays:[['notes','笔记']]},
+  chat:{name:'对话', arrays:[]},
+  skills:{name:'技能中心', arrays:[]},
+  ach:{name:'成就墙', arrays:[]}
+};
+const Cap = {
+  modName(m){ return (CAP_MODULES[m]&&CAP_MODULES[m].name)||m; },
+  /* 注入到每个模块顶部的统一能力栏 */
+  bar(opts){
+    const m=(opts&&opts.module)||curView||'overview';
+    return `<div class="capbar">
+      <button class="btn sm ghost" onclick="Cap.photo('${m}')">📷 拍照上传</button>
+      <button class="btn sm ghost" onclick="Cap.voice('${m}')">🎤 语音输入</button>
+      <button class="btn sm ghost" onclick="Cap.search()">🌐 联网检索</button>
+      <button class="btn sm ghost" onclick="Cap.ie('${m}')">⬇️ 导入/导出</button>
+    </div>`;
+  },
+  /* 本模块附件区（统一展示该模块关联图片） */
+  attachSection(module){
+    if(module==='photos') return '';
+    const list=(state.photos||[]).filter(p=>p.module===module);
+    if(!list.length) return '';
+    return `<div class="card" style="margin-top:14px"><h3>📎 本模块附件（${list.length}）</h3><div class="photos">${list.map(p=>`<div class="photo"><img src="${p.url}"><div class="cap">${p.date}${p.note?' · '+escapeHtml(p.note):''}</div></div>`).join('')}</div></div>`;
+  },
+  /* ---------- ① 拍照上传 ---------- */
+  photo(module){
+    module=module||curView; Cap._mod=module;
+    openModal(`<h2>📷 拍照 / 上传 <button class="close" onclick="closeModal()">✕</button></h2>
+      <div class="sub" style="margin-bottom:8px">为「${Cap.modName(module)}」添加图片，可拍照或从相册选择。</div>
+      <video id="capVid" autoplay playsinline muted style="width:100%;border-radius:12px;background:#000;max-height:300px"></video>
+      <div class="addbar" style="margin-top:10px">
+        <button class="btn" onclick="Cap._shoot('${module}')">📸 拍摄</button>
+        <button class="btn ghost" onclick="Cap._file('${module}')">🖼️ 选择图片</button>
+        <input id="capNote" placeholder="图片备注(选填)" style="flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px"/>
+      </div>
+      <input type="file" id="capFile" accept="image/*" style="display:none" onchange="Cap._onfile(event,'${module}')"/>
+      <canvas id="capCv" style="display:none"></canvas>
+      <div id="capPhoPrev" class="photos" style="margin-top:10px"></div>
+      <div class="sub" style="margin-top:8px">图片存到「相册」并标记来自本模块，可在本模块底部「📎 本模块附件」查看。</div>`);
+    const v=document.getElementById('capVid');
+    if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+        .then(s=>{ Cap._stream=s; v.srcObject=s; })
+        .catch(()=>{ if(v) v.outerHTML='<div class="preview">⚠️ 无法访问摄像头，请用「选择图片」。</div>'; });
+    } else if(v){ v.outerHTML='<div class="preview">当前环境不支持摄像头，请用「选择图片」。</div>'; }
+    Cap._renderModPhotos(module);
+  },
+  _shoot(module){ const v=document.getElementById('capVid'),c=document.getElementById('capCv'); if(!v||!c)return; if(!Cap._stream){toast('摄像头未开启，请用选择图片');return;} c.width=v.videoWidth||640;c.height=v.videoHeight||480; c.getContext('2d').drawImage(v,0,0,c.width,c.height); Cap._add(c.toDataURL('image/png'), module); },
+  _file(module){ const f=document.getElementById('capFile'); if(f) f.click(); },
+  _onfile(e,module){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>Cap._add(r.result,module); r.readAsDataURL(f); },
+  _add(url,module){ if(!url)return; const note=(document.getElementById('capNote')||{}).value||''; state.photos.unshift({date:todayStr(),url,note:note||'',module:module||Cap._mod}); save(); Cap._renderModPhotos(module||Cap._mod); toast('已添加到'+Cap.modName(module||Cap._mod)); },
+  _renderModPhotos(module){ const box=document.getElementById('capPhoPrev'); if(!box)return; const list=(state.photos||[]).filter(p=>p.module===module); box.innerHTML=list.length?list.map(p=>`<div class="photo"><img src="${p.url}"><div class="cap">${p.date}${p.note?' · '+escapeHtml(p.note):''}</div></div>`).join(''):'<div class="empty">暂无本模块图片</div>'; },
+  /* ---------- ② 语音转文字输入 ---------- */
+  voice(module){
+    module=module||curView;
+    openModal(`<h2>🎤 语音转文字 <button class="close" onclick="closeModal()">✕</button></h2>
+      <div class="sub">说中文，自动转成文字填入下方；可保存到「${Cap.modName(module)}」。</div>
+      <div class="addbar"><button class="btn" id="capMic" onclick="Cap._vrec()">🎤 开始</button></div>
+      <textarea id="capVoice" rows="5" placeholder="语音结果会出现在这里…" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;font-family:inherit"></textarea>
+      <div class="addbar" style="margin-top:10px">
+        <button class="btn" onclick="Cap._vsave('${module}')">💾 保存为「${Cap.modName(module)}」记录</button>
+        <button class="btn ghost" onclick="closeModal()">取消</button>
+      </div>
+      <div class="sub" style="margin-top:6px">支持 Chrome / Edge；首次会请求麦克风权限。</div>`);
+  },
+  _vrec(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR){toast('浏览器不支持语音，请用 Chrome/Edge');return;} if(Cap._vr){Cap._vr.stop();return;} const r=new SR(); r.lang='zh-CN'; r.interimResults=false; r.maxAlternatives=1; Cap._vr=r; const b=document.getElementById('capMic'); r.onstart=()=>{Cap._va=true; if(b){b.textContent='⏹ 停止';b.classList.add('recording');} toast('聆听中…');}; r.onresult=e=>{const t=e.results[0][0].transcript; const ta=document.getElementById('capVoice'); if(ta)ta.value=(ta.value?ta.value+' ':'')+t;}; r.onerror=()=>toast('识别出错（检查麦克风/HTTPS）'); r.onend=()=>{Cap._vr=null;Cap._va=false; if(b){b.textContent='🎤 开始';b.classList.remove('recording');}}; try{r.start();}catch(e){toast('无法启动语音');} },
+  _vsave(module){ const ta=document.getElementById('capVoice'); const text=(ta?ta.value:'').trim(); if(!text){toast('没有内容');return;} Cap.commit(module,text); closeModal(); },
+  commit(module,raw){
+    const text=String(raw||'').trim(); if(!text)return;
+    if(module==='chat'){ handleInput(text); return; }
+    if(module==='tasks'){ const it={text,done:false,date:todayStr(),due:null,important:false,tag:''}; state.tasksAll.unshift(it); state.tasksToday.unshift(it); }
+    else if(module==='review'){ state.reviews.unshift({date:todayStr(),text}); state.weekly.review+=1; gainXP(REWARDS.review.xp,REWARDS.review.coin); unlockAch('first_review'); }
+    else if(module==='research'){ state.notes.unshift({title:'语音笔记 '+todayStr(),points:[text],date:todayStr(),cat:'未分类',tag:''}); }
+    else if(module==='finance'){ const amt=extractAmount(text); if(amt!=null){ state.finance.unshift({type:'支出',amount:amt,cat:'personal',note:text.slice(0,20),date:todayStr()}); } else { state.notes.unshift({title:'语音备忘',points:[text],date:todayStr(),cat:'未分类',tag:''}); } }
+    else { state.notes.unshift({title:'语音笔记 '+todayStr(),points:[text],date:todayStr(),cat:'未分类',tag:''}); }
+    save(); render(); toast('已保存语音记录');
+  },
+  /* ---------- ③ 外部联网检索（维基百科中文 API，需联网） ---------- */
+  search(){
+    openModal(`<h2>🌐 联网检索 <button class="close" onclick="closeModal()">✕</button></h2>
+      <div class="sub">实时联网检索（维基百科中文，需联网）。结果可点开原文，也可在新标签用百度/Google 搜。</div>
+      <div class="addbar"><input id="capQ" placeholder="关键词，如：番茄工作法、复利、OKR…" onkeydown="if(event.key==='Enter')Cap._doSearch()"/>
+        <button class="btn" onclick="Cap._doSearch()">🔍 检索</button></div>
+      <div id="capRes" class="preview" style="margin-top:10px"><div class="empty">输入关键词开始检索</div></div>`);
+  },
+  async _doSearch(){ const q=document.getElementById('capQ'); if(!q)return; const kw=q.value.trim(); if(!kw){toast('请输入');return;} const box=document.getElementById('capRes'); if(!box)return; box.innerHTML='检索中…'; try{ const url='https://zh.wikipedia.org/w/api.php?action=query&list=search&srsearch='+encodeURIComponent(kw)+'&format=json&srlimit=10&origin=*'; const r=await fetch(url); const j=await r.json(); const list=(j.query&&j.query.search)||[]; if(!list.length){ box.innerHTML='<div class="empty">没有找到相关结果，换个词试试</div>'; return; } box.innerHTML=list.map(it=>`<div class="note"><div class="note-h"><b><a href="https://zh.wikipedia.org/?curid=${it.pageid}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a></b></div><div class="note-d" style="border-left:3px solid var(--blue)">${escapeHtml((it.snippet||'').replace(/<\/?[^>]+>/g,''))}</div></div>`).join('')+`<div style="margin-top:8px"><a class="chip" href="https://www.baidu.com/s?wd=${encodeURIComponent(kw)}" target="_blank" rel="noopener">🔎 百度新标签打开</a> <a class="chip" href="https://www.google.com/search?q=${encodeURIComponent(kw)}" target="_blank" rel="noopener">🌐 Google 新标签打开</a></div>`; }catch(e){ box.innerHTML='<div class="empty">检索失败，请检查网络（需联网）</div>'; } },
+  /* ---------- ④ 内容导入与导出（按模块数据表） ---------- */
+  ie(module){
+    module=module||curView; const cfg=CAP_MODULES[module]||{name:module,arrays:[]};
+    let body='';
+    if(cfg.arrays.length){
+      body='<div class="sub">选择要导出/导入的数据表：</div>';
+      cfg.arrays.forEach(([key,label])=>{ const n=(state[key]||[]).length;
+        body+=`<div class="row" style="margin:6px 0"><span>${escapeHtml(label)}（${n}）</span><span>
+          <button class="btn sm ghost" onclick="Cap.exportArr('${module}','${key}','${label}','json')">JSON</button>
+          <button class="btn sm ghost" onclick="Cap.exportArr('${module}','${key}','${label}','csv')">CSV</button>
+          <button class="btn sm ghost" onclick="Cap.importArr('${module}','${key}','${label}')">导入</button></span></div>`; });
+    } else { body='<div class="empty">本模块无独立数据表，使用「数据」中心做全量备份/恢复。</div>'; }
+    body+='<div style="margin-top:10px"><button class="btn sm" onclick="DataModal.open()">📦 打开数据中心（全量备份）</button></div>';
+    openModal(`<h2>⬇️ 导入 / 导出 · ${cfg.name} <button class="close" onclick="closeModal()">✕</button></h2>${body}<input type="file" id="capImp" accept=".json" style="display:none"/>`);
+  },
+  exportArr(module,key,label,fmt){ const arr=state[key]||[]; if(!arr.length){toast('没有数据');return;} if(fmt==='csv'){ Cap._dlCSV(label,arr); } else { const blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'}); downloadBlob(blob, label+'_'+todayStr()+'.json'); } toast('已导出 '+label); },
+  importArr(module,key,label){ const inp=document.getElementById('capImp'); if(!inp)return; inp.onchange=function(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ try{ const obj=JSON.parse(r.result); const arr=Array.isArray(obj)?obj:(obj.data||[]); if(!Array.isArray(arr)){toast('格式不对');return;} const mode=window.confirm('导入方式：\n确定 = 合并（追加到现有）\n取消 = 覆盖（替换现有）'); if(mode){ state[key]=(state[key]||[]).concat(arr); } else { state[key]=arr; } save(); render(); toast('已导入 '+arr.length+' 条'+label); }catch(err){toast('解析失败');} }; r.readAsText(f); e.target.value=''; }; inp.click(); },
+  _dlCSV(label,arr){ const cols=Array.from(new Set(arr.flatMap(o=>Object.keys(o||{})))); const esc=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`; const rows=[cols.map(esc).join(',')].concat(arr.map(o=>cols.map(c=>esc(o[c])).join(','))); const blob=new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv;charset=utf-8'}); downloadBlob(blob, label+'_'+todayStr()+'.csv'); },
+  /* ---------- 初始化：手机抽屉滑动手势 + 底部快捷导航 ---------- */
+  _stream:null, _vr:null, _va:false, _mod:'',
+  init(){ Cap._initSwipe(); Cap._buildBottomNav(); },
+  _initSwipe(){
+    const side=document.getElementById('side'); if(!side) return;
+    let sx=0, sy=0, dragging=false, startOpen=false;
+    document.addEventListener('touchstart', e=>{ if(!isMobile())return; const t=e.touches[0]; sx=t.clientX; sy=t.clientY; startOpen=side.classList.contains('open'); dragging=(!startOpen && sx<24)||startOpen; }, {passive:true});
+    document.addEventListener('touchmove', e=>{ if(!isMobile()||!dragging)return; const t=e.touches[0]; const dx=t.clientX-sx, dy=t.clientY-sy; if(Math.abs(dx)<Math.abs(dy))return; if(startOpen){ if(dx<0){ e.preventDefault(); side.style.transition='none'; side.style.transform='translate3d('+dx+'px,0,0)'; } } else { if(dx>0&&sx<24){ e.preventDefault(); side.style.transition='none'; const p=Math.min(dx,side.offsetWidth); side.style.transform='translate3d('+(-side.offsetWidth+p)+'px,0,0)'; } } }, {passive:false});
+    document.addEventListener('touchend', e=>{ if(!isMobile()||!dragging)return; dragging=false; side.style.transition=''; side.style.transform=''; const t=e.changedTouches[0]; const dx=t.clientX-sx; if(startOpen){ if(dx<-50) App.toggleSide(false); } else { if(dx>50) App.toggleSide(true); } }, {passive:true});
+  },
+  _buildBottomNav(){
+    const nav=document.getElementById('mobilenav'); if(!nav)return;
+    const quick=[['overview','🏠','概览'],['chat','💬','对话'],['tasks','📝','待办'],['review','🪞','复盘'],['digest','📻','播报']];
+    nav.innerHTML=quick.map(([id,ic,name])=>`<button data-id="${id}" onclick="App.go('${id}')">${ic}<span>${name}</span></button>`).join('')+`<button onclick="App.toggleSide(true)">☰<span>全部</span></button>`;
+    window.addEventListener('resize', ()=>{ const cur=curView; Cap._syncNav(cur); });
+    Cap._syncNav(curView);
+  },
+  _syncNav(id){ const nav=document.getElementById('mobilenav'); if(!nav)return; nav.querySelectorAll('button[data-id]').forEach(b=>b.classList.toggle('on', b.dataset.id===id)); }
+};
+window.Cap=Cap;
+window.addEventListener('DOMContentLoaded', ()=>{ if(window.Cap) Cap._syncNav(curView); });
+
 /* ============ 启动 ============ */
 // 兼容旧版(v1)数据
 try{ if(!localStorage.getItem(STORE_KEY) && localStorage.getItem('hupo_agent_v1')){ localStorage.setItem(STORE_KEY, localStorage.getItem('hupo_agent_v1')); } }catch(e){}
@@ -1769,6 +1946,7 @@ setInterval(syncPull, 15000);
   }, 60000);
 })();
 normalize(); save(); render();
+Cap.init();
 syncPull();
 </script>
 </body>
