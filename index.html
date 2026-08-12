@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>琥珀的agent · 个人成长管家</title>
+<link rel="icon" type="image/png" href="icon.png" sizes="512x512">
+<link rel="apple-touch-icon" href="icon.png" sizes="512x512">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="琥珀">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#5b9cf0">
+<style>
+  :root{
+    --blue:#5b9cf0; --blue-soft:#eaf4ff; --pink:#ff9ec4; --pink-soft:#fdeef4;
+    --green:#5ed6a6; --purple:#b69cf0; --orange:#ffb86b; --gold:#ffce5c;
+    --text:#3a3f55; --text-soft:#7a819a; --card:#ffffff; --line:#eef1f8;
+    --shadow:0 8px 24px rgba(120,140,200,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--text);background:linear-gradient(135deg,#eaf6ff 0%,#fdeef4 60%,#f3ecff 100%);
+    min-height:100vh;padding:14px;
+  }
+  .app{display:flex;gap:14px;max-width:1180px;margin:0 auto;height:calc(100vh - 28px)}
+  /* 侧边栏 */
+  .side{width:188px;flex:0 0 188px;background:rgba(255,255,255,.78);backdrop-filter:blur(8px);
+    border-radius:20px;box-shadow:var(--shadow);padding:16px 12px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+  .logo{display:flex;align-items:center;gap:10px;padding:4px 8px 14px}
+  .logo .ava{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--pink));display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 38px;overflow:hidden;cursor:pointer}
+  .logo .ava img{width:100%;height:100%;object-fit:cover;display:block}
+    display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
+  .logo b{font-size:15px}
+  .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
+  .nav-btn{border:none;background:transparent;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;
+    font-size:14px;color:var(--text);display:flex;align-items:center;gap:9px;transition:.15s}
+  .nav-btn:hover{background:var(--blue-soft)}
+  .nav-btn.active{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;box-shadow:0 4px 12px rgba(120,140,200,.3)}
+  .nav-btn .ic{font-size:16px}
+  .side-foot{margin-top:auto;font-size:11px;color:var(--text-soft);padding:8px}
+  /* 主区 */
+  .main{flex:1;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);border-radius:20px;
+    box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;overflow:hidden}
+  .topbar{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .topbar .title{font-size:18px;font-weight:700}
+  .stat{display:flex;align-items:center;gap:7px;background:var(--blue-soft);padding:6px 12px;border-radius:12px;font-size:13px}
+  .stat.coin{background:#fff6e0}.stat.fire{background:#ffe9ef}.stat.clock{background:#eef3ff}.stat.count{background:#fff0f6;color:#d0588f;font-weight:600}
+  .xpwrap{flex:1;min-width:160px}
+  .xpbar{height:12px;background:#eef1f8;border-radius:8px;overflow:hidden}
+  .xpfill{height:100%;background:linear-gradient(90deg,var(--blue),var(--pink));border-radius:8px;transition:.4s}
+  .xptxt{font-size:11px;color:var(--text-soft);margin-top:3px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#bbb;display:inline-block}
+  .dot.synced{background:var(--green)} .dot.offline{background:#e06a6a} .dot.syncing{background:var(--gold);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .view{flex:1;overflow:auto;padding-top:16px}
+  /* 卡片通用 */
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(120,140,200,.08);border:1px solid var(--line)}
+  .card h3{font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+  .big{font-size:26px;font-weight:800}
+  .sub{color:var(--text-soft);font-size:12px}
+  .bar{height:10px;background:#eef1f8;border-radius:6px;overflow:hidden;margin-top:8px}
+  .bar>div{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--pink));transition:.4s}
+  .bar.green>div{background:linear-gradient(90deg,var(--green),#9be8c8)}
+  .bar.gold>div{background:linear-gradient(90deg,var(--gold),#ffd98a)}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  /* 对话 */
+  .chat{flex:1;display:flex;flex-direction:column;height:100%}
+  .msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:6px}
+  .msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .msg.bot{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+  .msg.me{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;padding:10px 0}
+  .chip{border:1px solid var(--blue);color:var(--blue);background:#fff;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer}
+  .chip:hover{background:var(--blue-soft)}
+  .inputbar{display:flex;gap:8px;padding-top:10px;align-items:center}
+  .inputbar input{flex:1;border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;outline:none;min-width:0}
+  .inputbar input:focus{border-color:var(--blue)}
+  .iconbtn{border:none;background:var(--blue-soft);color:var(--blue);width:44px;height:44px;border-radius:14px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .iconbtn:hover{background:#dcebff}
+  .iconbtn.recording{background:var(--pink);color:#fff;animation:pulse 1s infinite}
+  .btn{border:none;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;padding:0 20px;border-radius:14px;
+    font-size:14px;cursor:pointer;font-weight:600;height:44px}
+  .btn:hover{opacity:.92}.btn.sm{padding:6px 12px;font-size:12px;border-radius:10px;height:auto}
+  .btn.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+  /* 列表 */
+  .item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:#fafbff;border:1px solid var(--line);margin-bottom:8px}
+  .item .main{flex:1;font-size:13px}
+  .item.done .main{text-decoration:line-through;color:var(--text-soft)}
+  .tag{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--blue-soft);color:var(--blue)}
+  .tag.p{background:#fff6e0;color:#c98a2a}.tag.c{background:#e9fbf2;color:#2a9c74}.tag.o{background:#f0ecff;color:#7a5bd0}
+  .tag.imp{background:#ffe3ee;color:#d0588f}
+  .check{width:20px;height:20px;border-radius:6px;border:2px solid var(--blue);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;flex:0 0 20px}
+  .check.on{background:var(--blue);border-color:var(--blue)}
+  .note{background:#fafbff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .note-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .note-h .sub{font-size:11px;color:var(--text-soft);margin-left:2px}
+  .note-pts{margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.7}
+  .note-pts>li{margin-bottom:10px}
+  .note-item .note-t{font-weight:600;color:var(--text)}
+  .note-item .note-d{margin:4px 0 0;color:var(--text-soft);font-size:12.5px;line-height:1.8;background:#f3f6ff;border-left:3px solid var(--blue);padding:7px 10px;border-radius:0 8px 8px 0}
+  .note-sub{margin:5px 0 0 4px;padding-left:16px;list-style:circle}
+  .note-sub>li{margin-bottom:3px;font-size:12px;color:var(--text-soft)}
+  .addbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .addbar input,.addbar select,.addbar textarea{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;outline:none;min-width:0;font-family:inherit}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--text-soft);font-weight:600;font-size:12px}
+  .empty{color:var(--text-soft);font-size:13px;text-align:center;padding:24px}
+  .ach{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;border-radius:16px;background:#fafbff;border:1px solid var(--line);text-align:center}
+  .ach .medal{font-size:30px;filter:grayscale(1);opacity:.4}
+  .ach.on .medal{filter:none;opacity:1}
+  .ach.on{border-color:var(--gold);background:#fffaf0}
+  .ach small{font-size:11px;color:var(--text-soft)}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#3a3f55;color:#fff;padding:10px 18px;border-radius:14px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+  /* 技能卡片 */
+  .skill{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 14px;border-radius:18px;background:#fff;border:1px solid var(--line);cursor:pointer;transition:.15s;text-align:center}
+  .skill:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(120,140,200,.18);border-color:var(--blue)}
+  .skill .emo{font-size:34px}
+  .skill b{font-size:14px}
+  .skill small{font-size:11px;color:var(--text-soft)}
+  /* 相册 */
+  .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+  .photo{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fafbff}
+  .photo img{width:100%;height:120px;object-fit:cover;display:block}
+  .photo .cap{font-size:11px;color:var(--text-soft);padding:6px 8px}
+  /* 弹窗 */
+  .modal-mask{position:fixed;inset:0;background:rgba(40,46,70,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+  .modal{background:#fff;border-radius:20px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(40,46,70,.3)}
+  .modal h2{font-size:18px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .modal .close{margin-left:auto;border:none;background:#f0f2f8;width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:16px}
+  .modal label{display:block;font-size:12px;color:var(--text-soft);margin:10px 0 4px}
+  .modal input,.modal textarea,.modal select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;outline:none;font-family:inherit}
+  .modal .row2{display:flex;gap:10px}.modal .row2>*{flex:1}
+  .preview{background:#fafbff;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:260px;overflow:auto;margin-top:10px;font-size:12px}
+  .modal video{width:100%;border-radius:12px;background:#000}
+  .canvasprev{width:100%;border-radius:12px;border:1px solid var(--line);margin-top:10px;background:#fff}
+  @media(max-width:760px){.app{flex-direction:column;height:auto}.side{width:100%;flex-direction:row;flex-wrap:wrap}.side-foot{display:none}.g2,.g3,.g4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="side">
+    <div class="logo">
+      <div class="ava" onclick="changeAvatar()" title="点击更换头像"><img src="avatar.png" alt="头像" onerror="this.parentNode.textContent='🟡'"/></div>
+      <div><b>琥珀的agent</b><small>个人成长管家</small></div>
+    </div>
+    <button class="nav-btn active" data-v="overview"><span class="ic">🏠</span>概览</button>
+    <button class="nav-btn" data-v="chat"><span class="ic">💬</span>对话</button>
+    <button class="nav-btn" data-v="goals"><span class="ic">🎯</span>目标</button>
+    <button class="nav-btn" data-v="tasks"><span class="ic">📝</span>待办</button>
+    <button class="nav-btn" data-v="research"><span class="ic">📚</span>科研/学习</button>
+    <button class="nav-btn" data-v="finance"><span class="ic">💰</span>财务</button>
+    <button class="nav-btn" data-v="exercise"><span class="ic">🏃</span>运动健康</button>
+    <button class="nav-btn" data-v="skills"><span class="ic">🛠️</span>技能中心</button>
+    <button class="nav-btn" data-v="photos"><span class="ic">🖼️</span>相册</button>
+    <button class="nav-btn" data-v="review"><span class="ic">🪞</span>复盘</button>
+    <button class="nav-btn" data-v="ach"><span class="ic">🏆</span>成就墙</button>
+    <div class="side-foot">数据优先存云端同步<br>点右上「数据」可备份</div>
+  </aside>
+
+  <!-- 主区 -->
+  <section class="main">
+    <div class="topbar">
+      <div class="title" id="viewTitle">工作台概览</div>
+      <div class="stat clock" id="clock">--</div>
+      <div class="stat count" id="countdown">⏰ 暂无倒计时提醒</div>
+      <div class="stat">🟡 LV<span id="tLv">1</span></div>
+      <div class="stat coin">🪙 <span id="tCoin">0</span></div>
+      <div class="stat fire">🔥 <span id="tStreak">0</span>天</div>
+      <div class="xpwrap">
+        <div class="xpbar"><div class="xpfill" id="tXpFill" style="width:0%"></div></div>
+        <div class="xptxt" id="tXpTxt">XP 0 / 100</div>
+      </div>
+      <span class="stat" title="同步状态：点击手动同步" style="cursor:pointer" onclick="App.syncNow()"><span class="dot" id="syncDot"></span> <span id="syncTxt">同步</span></span>
+      <button class="btn sm ghost" onclick="App.openData()">数据</button>
+    </div>
+    <div class="view" id="view"></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileJson" accept="application/json" style="display:none" />
+<input type="file" id="fileXlsx" accept=".xlsx,.xls" style="display:none" />
+<input type="file" id="fileImg" accept="image/*" style="display:none" />
+<div id="modalRoot"></div>
+
+<!-- 本地技能库（离线可用） -->
+<script src="./libs/chart.umd.min.js"></script>
+<script src="./libs/xlsx.full.min.js"></script>
+<script src="./libs/pptxgen.bundle.js"></script>
+<script src="./libs/docx.umd.js"></script>
+<script src="./libs/html-to-image.js"></script>
+<script>
+/* ============ 数据模型 ============ */
+const STORE_KEY = 'hupo_agent_v2';
+function mondayOf(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x;}
+function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function pad(n){return String(n).padStart(2,'0');}
+
+const REWARDS = {
+  study:{xp:20,coin:5,label:'学习打卡'},
+  exercise:{xp:15,coin:4,label:'运动打卡'},
+  review:{xp:25,coin:6,label:'每日复盘'},
+  research:{xp:30,coin:8,label:'推进科研'},
+  literature:{xp:15,coin:4,label:'阅读文献'},
+  finance:{xp:10,coin:3,label:'记录收支'},
+  streak7:{xp:50,coin:20},
+  achievement:{xp:100,coin:30}
+};
+
+const DEFAULT = {
+  level:1, xp:0, xpToNext:100, mucoins:0,
+  streak:0, longestStreak:0, lastCheckin:null,
+  weekStart: mondayOf(new Date()).toISOString(),
+  budgetMonth: ym(new Date()),
+  weekly:{study:0,exercise:0,review:0, targetStudy:7, targetExercise:7, targetReview:7},
+  budget:{limit:3000, personal:0, company:0, other:0},
+  tasksToday:[], tasksAll:[],
+  literature:[], research:[], ideas:[],
+  finance:[], exercise:[], reviews:[], summaries:[],
+  photos:[], notes:[],
+  billRemind:false, _pendingBill:[],
+  achievements:[{id:'first_study',name:'初学乍练',desc:'完成第一次学习打卡',got:false},
+                {id:'week_study',name:'一周不辍',desc:'一周学习打卡满7次',got:false},
+                {id:'first_ex',name:'动起来',desc:'完成第一次运动打卡',got:false},
+                {id:'first_review',name:'吾日三省',desc:'完成第一次每日复盘',got:false},
+                {id:'lv5',name:'小有所成',desc:'达到 LV5',got:false},
+                {id:'coin100',name:'小金库',desc:'累计 100 木币',got:false}],
+  chat:[{role:'bot',text:'嗨，我是你的专属管家琥珀 🟡\n你可以直接对我说：\n· 今天学习2小时\n· 运动40分钟 / 走了6000步\n· 提醒我明天15:00交报告（重要）\n· 复盘：今天……\n· 加待办 明天交报告\n· 支出 35 午饭 个人\n· 我的状态\n也可以点左侧「技能中心」做PPT、数据分析、做图、写文档；点麦克风语音录入；点📷拍照。'}]
+};
+
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return structuredClone(DEFAULT);
+    let s = JSON.parse(raw);
+    s = Object.assign(structuredClone(DEFAULT), s);
+    s.photos = s.photos || [];
+    return s;
+  }catch(e){ return structuredClone(DEFAULT); }
+}
+let saveTimer=null;
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(syncPush, 700);
+}
+
+function normalize(){
+  const now = new Date();
+  const m = mondayOf(now).toISOString();
+  if(state.weekStart !== m){
+    state.weekStart = m;
+    state.weekly.study = 0; state.weekly.exercise = 0; state.weekly.review = 0;
+  }
+  const ymNow = ym(now);
+  if(state.budgetMonth !== ymNow){
+    state.budgetMonth = ymNow;
+    state.budget.personal = 0; state.budget.company = 0; state.budget.other = 0;
+  }
+}
+
+function gainXP(xp, coin, reason){
+  state.xp += xp; state.mucoins += coin;
+  let leveled = false;
+  while(state.xp >= state.xpToNext){
+    state.xp -= state.xpToNext;
+    state.level += 1;
+    state.xpToNext = Math.round(state.xpToNext * 1.4);
+    leveled = true;
+  }
+  if(state.level >= 5) unlockAch('lv5');
+  if(state.mucoins >= 100) unlockAch('coin100');
+  return leveled;
+}
+function unlockAch(id){
+  const a = state.achievements.find(x=>x.id===id);
+  if(a && !a.got){ a.got = true; return a.name; }
+  return null;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+/* ============ 同步（PC/手机同源） ============ */
+let syncKey = localStorage.getItem('hupo_sync_key') || 'hupo-agent-share';
+let lastSyncTs = parseInt(localStorage.getItem('hupo_sync_ts')||'0',10);
+function setSyncStatus(s, txt){
+  const dot=document.getElementById('syncDot'); const t=document.getElementById('syncTxt');
+  if(dot){dot.className='dot '+(s==='synced'?'synced':s==='offline'?'offline':'syncing');}
+  if(t){t.textContent = txt || (s==='synced'?'已同步':s==='offline'?'离线':'同步中');}
+}
+function syncPush(){
+  if(syncProvider==='gitee'){ giteePush(); return; }
+  if(!navigator.onLine) { setSyncStatus('offline'); return; }
+  setSyncStatus('syncing');
+  const payload={ts:Date.now(), data:state, device:(navigator.userAgent||'').slice(0,40)};
+  fetch('/sync',{method:'POST',headers:{'content-type':'application/json','x-sync-key':syncKey},body:JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(j=>{ if(j && j.ok){ lastSyncTs=Date.now(); localStorage.setItem('hupo_sync_ts',lastSyncTs); setSyncStatus('synced'); } else setSyncStatus('offline'); })
+    .catch(()=>setSyncStatus('offline'));
+}
+function syncPull(){
+  if(syncProvider==='gitee'){ giteePull(); return; }
+  fetch('/sync',{headers:{'x-sync-key':syncKey}})
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && j.data && j.ts && j.ts>lastSyncTs){
+        mergeRemote(j.data, j.ts);
+      }
+      setSyncStatus('synced');
+    })
+    .catch(()=>setSyncStatus('offline'));
+}
+// 把远端 state 合并进本地（笔记按 标题|日期 去重避免重复）
+function mergeRemote(inc, ts){
+  if(!inc) return;
+  const seen=new Set((state.notes||[]).map(n=>(n&&n.title||'')+'|'+(n&&n.date||'')));
+  inc.notes=((inc.notes||[]).concat((state.notes||[]).filter(n=>!seen.has((n&&n.title||'')+'|'+(n&&n.date||'')))));
+  state=inc; lastSyncTs=ts; localStorage.setItem('hupo_sync_ts',lastSyncTs);
+  save(); render();
+}
+
+/* ============ 云端中转同步（Gitee，电脑关机也能用） ============ */
+function isCloudHost(){
+  const h=location.hostname;
+  return !(h==='localhost'||h==='127.0.0.1'||h==='[::1]'||h.startsWith('192.168.')||h.startsWith('10.')||/^172\.(1[6-9]|2\d|3[01])\./.test(h));
+}
+let syncProvider = (function(){ const s=localStorage.getItem('hupo_sync_provider'); return (s==='gitee'||s==='local')?s:(isCloudHost()?'gitee':'local'); })();
+let gtToken = localStorage.getItem('hupo_gt_token') || '';
+let gtOwner = localStorage.getItem('hupo_gt_owner') || '';
+let gtPageRepo = 'hupo-agent';
+let gtDataRepo = 'hupo-agent-data';
+let gtSyncPath = 'sync/hupo-agent-sync.json';
+let gtFileSha = localStorage.getItem('hupo_gt_sha') || '';
+const GT_API='https://gitee.com/api/v5';
+function gtHeaders(extra){ const h={'Authorization':'token '+gtToken,'Content-Type':'application/json'}; if(extra) Object.assign(h,extra); return h; }
+function gtUrl(p){ return GT_API+p; }
+function b64u(str){ return btoa(unescape(encodeURIComponent(str))); }
+function unb64u(b64){ return decodeURIComponent(escape(atob((b64||'').replace(/\s/g,'')))); }
+function setProvider(p){
+  syncProvider=p; localStorage.setItem('hupo_sync_provider',p);
+  const gb=document.getElementById('giteeBox'); if(gb) gb.style.display = p==='gitee'?'':'none';
+  const lb=document.getElementById('localSyncBox'); if(lb) lb.style.display = p==='local'?'':'none';
+  if(p==='gitee'){ if(gtToken&&gtOwner){ giteePull(); } else { toast('请填写 Gitee 令牌'); } }
+  else { syncPull(); }
+  toast(p==='gitee'?'已切换为云端中转(Gitee)':'已切换为连本机');
+}
+async function resolveGtFile(){
+  try{
+    const r=await fetch(gtUrl('/repos/'+gtOwner+'/'+gtDataRepo+'/contents/'+gtSyncPath),{headers:gtHeaders()});
+    if(r.ok){ const j=await r.json(); return {sha:j.sha}; }
+  }catch(e){}
+  return {sha:null};
+}
+async function giteePush(){
+  if(!gtToken||!gtOwner){ setSyncStatus('offline','需 Gitee 令牌'); return; }
+  setSyncStatus('syncing');
+  const body=JSON.stringify({ts:Date.now(), data:state, device:(navigator.userAgent||'').slice(0,40)});
+  try{
+    let sha=gtFileSha; if(!sha){ const f=await resolveGtFile(); sha=f.sha; }
+    const payload={message:'sync '+new Date().toISOString(), content:b64u(body), branch:'master'};
+    if(sha) payload.sha=sha;
+    const r=await fetch(gtUrl('/repos/'+gtOwner+'/'+gtDataRepo+'/contents/'+gtSyncPath),{method:'PUT',headers:gtHeaders(),body:JSON.stringify(payload)});
+    if(!r.ok){ setSyncStatus('offline','Gitee 写入失败'); return; }
+    const j=await r.json(); gtFileSha=j.content.sha; localStorage.setItem('hupo_gt_sha',gtFileSha);
+    lastSyncTs=Date.now(); localStorage.setItem('hupo_sync_ts',lastSyncTs); setSyncStatus('synced');
+  }catch(e){ setSyncStatus('offline','网络异常'); }
+}
+async function giteePull(){
+  if(!gtToken||!gtOwner){ setSyncStatus('offline','需 Gitee 令牌'); return; }
+  try{
+    const r=await fetch(gtUrl('/repos/'+gtOwner+'/'+gtDataRepo+'/contents/'+gtSyncPath),{headers:gtHeaders()});
+    if(!r.ok){ setSyncStatus('offline','未找到同步空间（请先在任一设备推送一次）'); return; }
+    const j=await r.json(); gtFileSha=j.sha; localStorage.setItem('hupo_gt_sha',gtFileSha);
+    const inc=JSON.parse(unb64u(j.content));
+    if(inc && inc.data && inc.ts && inc.ts>lastSyncTs){ mergeRemote(inc.data, inc.ts); }
+    setSyncStatus('synced');
+  }catch(e){ setSyncStatus('offline','网络异常'); }
+}
+
+/* ============ 自然语言解析 ============ */
+function extractMinutes(t){
+  let m=t.match(/(\d+(?:\.\d+)?)\s*(小时|个?小时|h|hr)/);
+  if(m) return Math.round(parseFloat(m[1])*60);
+  m=t.match(/(\d+)\s*(分钟|分|min)/);
+  if(m) return parseInt(m[1]);
+  if(/整天|一整天|全天/.test(t)) return 480;
+  if(/半天/.test(t)) return 240;
+  return null;
+}
+function extractSteps(t){const m=t.match(/(\d+)\s*(步|步数)/);return m?parseInt(m[1]):null;}
+function extractAmount(t){const m=t.match(/[¥￥]?\s*(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):null;}
+function catOf(t){ if(/公司|垫付|报销/.test(t)) return 'company'; if(/其他/.test(t)) return 'other'; return 'personal'; }
+
+function parseDue(text){
+  const now=new Date(); let d=new Date(now); let matched=false; let m;
+  if((m=text.match(/(\d+)\s*天后/))){ d.setDate(d.getDate()+parseInt(m[1])); matched=true; }
+  else if(/后天/.test(text)){ d.setDate(d.getDate()+2); matched=true; }
+  else if(/明天|次日/.test(text)){ d.setDate(d.getDate()+1); matched=true; }
+  else if(/今天|今日/.test(text)){ matched=true; }
+  let h=-1,min=0;
+  if((m=text.match(/(\d{1,2})[:：](\d{2})/))){ h=parseInt(m[1]); min=parseInt(m[2]); }
+  else if((m=text.match(/(上午|早上|中午|下午|晚上|傍晚)\s*(\d{1,2})\s*点/))){ let base=parseInt(m[2]); const ap=m[1]; if(ap==='下午'||ap==='晚上'||ap==='傍晚'){ if(base<12) base+=12; } h=base; min=0; }
+  else if((m=text.match(/(\d{1,2})\s*点/))){ h=parseInt(m[1]); min=0; }
+  if(h>=0){ d.setHours(h,min,0,0); matched=true; }
+  if(!matched) return null;
+  if(d.getTime() < now.getTime()-60000) return null;
+  return d.getTime();
+}
+function isImportant(t){ return /重要|紧急|务必|记得|提醒|别忘|千万别忘|必须/.test(t); }
+
+function handleInput(raw){
+  const text = raw.trim();
+  if(!text) return;
+  state.chat.push({role:'me',text});
+  let reply = '';
+  const t = text;
+
+  // 签到
+  if(/^签到$|签到/.test(t) && !/学习|运动|复盘/.test(t)){
+    const td = todayStr();
+    if(state.lastCheckin === td){ reply='今天已经签到过啦，明天再来～🔥'; }
+    else{
+      const y = new Date(); y.setDate(y.getDate()-1); const yd = y.getFullYear()+'-'+pad(y.getMonth()+1)+'-'+pad(y.getDate());
+      state.streak = (state.lastCheckin===yd)? state.streak+1 : 1;
+      state.longestStreak = Math.max(state.longestStreak, state.streak);
+      state.lastCheckin = td;
+      let r='签到成功！🔥 连续 '+state.streak+' 天。';
+      if(state.streak%7===0){ const lv=gainXP(REWARDS.streak7.xp,REWARDS.streak7.coin); r+=' 连签7天奖励 +'+REWARDS.streak7.xp+'XP +'+REWARDS.streak7.coin+'木币'+(lv?'，升级啦！':''); }
+      reply=r;
+    }
+  }
+  // 复盘
+  else if(/复盘/.test(t)){
+    let content = t.replace(/^.*复盘[:：]?/,'').trim();
+    if(!content) content = t;
+    state.reviews.unshift({date:todayStr(), text:content});
+    state.weekly.review += 1;
+    const lv = gainXP(REWARDS.review.xp,REWARDS.review.coin);
+    unlockAch('first_review');
+    reply='已记录今日复盘 🪞 +'+REWARDS.review.xp+'XP +'+REWARDS.review.coin+'木币'+(lv?'，升级啦！🎉':'');
+  }
+  // 文献
+  else if(/文献|论文|读了一篇|看书|读书/.test(t)){
+    const name = t.replace(/^.*(文献|论文|读了一篇|看书|读书)[:：]?/,'').trim()||'未命名文献';
+    state.literature.unshift({name, date:todayStr(), note:''});
+    const lv=gainXP(REWARDS.literature.xp,REWARDS.literature.coin);
+    reply='已收录文献 📚《'+name+'》 +'+REWARDS.literature.xp+'XP +'+REWARDS.literature.coin+'木币'+(lv?'，升级啦！':'');
+  }
+  // 提醒 / 重要待办（含时间）
+  else if(/提醒|闹钟|到点|别忘|千万别忘/.test(t) || (/待办|任务|todo|要做/.test(t) && parseDue(t))){
+    let txt = t.replace(/^(提醒我|提醒|闹钟|待办|任务|todo|要做|加|添加|新增|记)[:：]?\s*/,'').replace(/重要|紧急|务必/g,'').trim()||t;
+    const due = parseDue(t);
+    const imp = isImportant(t);
+    const item={text:txt, done:false, date:todayStr(), due:due, important:imp};
+    state.tasksAll.unshift(item); state.tasksToday.unshift(item);
+    reply='已添加'+(imp?'⭐重要':'')+'待办 📝：'+txt + (due?('（⏰ '+fmtDue(due)+'）'):'');
+  }
+  // 学习
+  else if(/学习|学了|看书|上课|网课/.test(t) && !/文献|论文/.test(t)){
+    const min = extractMinutes(t) || 60;
+    state.weekly.study += 1;
+    const lv=gainXP(REWARDS.study.xp,REWARDS.study.coin);
+    if(state.weekly.study>=state.weekly.targetStudy) unlockAch('week_study');
+    unlockAch('first_study');
+    reply='学习打卡成功 📖 本次约 '+min+' 分钟，本周第 '+state.weekly.study+' 次 +'+REWARDS.study.xp+'XP +'+REWARDS.study.coin+'木币'+(lv?'，升级啦！🎉':'');
+  }
+  // 运动
+  else if(/运动|散步|跑步|健身|走路|走步|慢跑/.test(t)){
+    const steps = extractSteps(t); const min = extractMinutes(t);
+    const ok = (steps && steps>=5000) || (min && min>=30);
+    if(ok){
+      state.exercise.unshift({date:todayStr(), min:min||0, steps:steps||0});
+      state.weekly.exercise += 1;
+      const lv=gainXP(REWARDS.exercise.xp,REWARDS.exercise.coin);
+      unlockAch('first_ex');
+      reply='运动打卡成功 🏃 达标！本周第 '+state.weekly.exercise+' 次 +'+REWARDS.exercise.xp+'XP +'+REWARDS.exercise.coin+'木币'+(lv?'，升级啦！':'');
+    } else {
+      reply='这次运动量好像没到 30 分钟 / 5000 步哦，先不计入打卡～ 走走路也是好的💪';
+    }
+  }
+  // 科研任务
+  else if(/科研任务|研究任务|课题/.test(t)){
+    const name = t.replace(/^.*(科研任务|研究任务|课题)[:：]?/,'').trim()||'未命名任务';
+    state.research.unshift({name, done:false, date:todayStr()});
+    const lv=gainXP(REWARDS.research.xp,REWARDS.research.coin);
+    reply='已添加科研任务 🔬《'+name+'》 +'+REWARDS.research.xp+'XP +'+REWARDS.research.coin+'木币'+(lv?'，升级啦！':'');
+  }
+  // 灵感
+  else if(/灵感|点子|想法|创意/.test(t)){
+    const name = t.replace(/^.*(灵感|点子|想法|创意)[:：]?/,'').trim()||'未命名灵感';
+    state.ideas.unshift({name, date:todayStr()});
+    reply='灵感已收入想法箱 💡：'+name;
+  }
+  // 待办：完成
+  else if(/(完成|做完|勾掉|搞定).*(待办|任务)|待办.*(完成|做完)|完成待办/.test(t)){
+    const m=t.match(/(\d+)/);
+    if(m){ const i=parseInt(m[1])-1; if(state.tasksAll[i]){ state.tasksAll[i].done=true; reply='已完成待办 ✓：'+state.tasksAll[i].text; } else reply='没找到第 '+m[1]+' 条待办哦'; }
+    else {
+      const kw=t.replace(/.*(完成|做完|勾掉|搞定)/,'').replace(/(待办|任务)/g,'').trim();
+      const it=state.tasksAll.find(x=>!x.done && x.text.includes(kw));
+      if(it){it.done=true;reply='已完成待办 ✓：'+it.text;} else reply='没匹配到要完成的待办～';
+    }
+  }
+  // 待办：新增（无时间）
+  else if(/待办|任务|todo|要做/.test(t)){
+    const txt = t.replace(/^(加|添加|新增|记)?\s*(待办|任务|todo|要做)[:：]?/,'').trim()||t;
+    const item={text:txt,done:false,date:todayStr(),due:null,important:false};
+    state.tasksAll.unshift(item); state.tasksToday.unshift(item);
+    reply='已添加待办 📝：'+txt;
+  }
+  // 收支
+  else if(/支出|花费|花|买|付|收入|工资|报销|入账/.test(t)){
+    const amt = extractAmount(t);
+    if(amt==null){ reply='没识别到金额，试试「支出 35 午饭 个人」这样的格式～'; }
+    else{
+      const isIncome = /收入|工资|报销|入账/.test(t) && !/支出|花|买|付/.test(t);
+      const cat = isIncome? 'income' : catOf(t);
+      const note = t.replace(/[¥￥]?\d+(\.\d+)?/g,'').replace(/^(支出|花费|收入|花|买|付|报销|入账)[:：]?/,'').replace(/(个人|公司|垫付|其他|报销)/g,'').trim()||'未备注';
+      state.finance.unshift({type:isIncome?'收入':'支出', amount:amt, cat, note, date:todayStr()});
+      if(!isIncome){
+        if(cat==='company') state.budget.company+=amt; else if(cat==='other') state.budget.other+=amt; else state.budget.personal+=amt;
+      }
+      reply=(isIncome?'已记收入 💰':'已记支出 💸')+' '+amt+' 元（'+(cat==='income'?'收入':cat==='company'?'公司垫付':cat==='other'?'其他':'个人')+'）'+note;
+    }
+  }
+  // 成就
+  else if(/成就|里程碑/.test(t)){
+    const name = t.replace(/^.*(成就|里程碑)[:：]?/,'').trim()||'我的成就';
+    state.achievements.unshift({id:'u_'+Date.now(),name,desc:'自定义',got:true});
+    const lv=gainXP(REWARDS.achievement.xp,REWARDS.achievement.coin);
+    reply='成就已点亮 🏆《'+name+'》 +'+REWARDS.achievement.xp+'XP +'+REWARDS.achievement.coin+'木币'+(lv?'，升级啦！':'');
+  }
+  // 内容笔记（要点 + 跳转链接）：笔记 标题 | 要点1；要点2 | 链接
+  else if(/^笔记/.test(t.trim())){
+    const body=t.trim().replace(/^笔记[:：]?\s*/,'');
+    const parts=body.split('|').map(s=>s.trim());
+    const title=parts[0]||'未命名笔记';
+    const points=(parts[1]||'').split(/[；;]/).map(s=>s.trim()).filter(Boolean);
+    const link=parts[2]||'';
+    state.notes.unshift({title, points, link, date:todayStr()});
+    reply='已保存要点笔记 📒《'+title+'》'+(link?'（已附跳转链接）':'')+'，共 '+points.length+' 条要点。默认看要点即可，需要原文时点「🔗 查看原文」。';
+  }
+  // 查询
+  else if(/状态|进度|木币|等级|概览|我的|怎么样|如何/.test(t)){
+    reply = summaryText();
+  }
+  // 兜底
+  else {
+    reply='收到～如果你想记录点什么，可以这样跟我说：\n· 今天学习2小时\n· 运动40分钟\n· 提醒我明天15:00交报告（重要）\n· 复盘：今天……\n· 加待办 明天交报告\n· 支出 35 午饭 个人\n· 笔记 标题 | 要点1；要点2 | 链接\n· 我的状态';
+  }
+  state.chat.push({role:'bot',text:reply});
+  save(); render();
+  const msgs=document.getElementById('msgs'); if(msgs) msgs.scrollTop=msgs.scrollHeight;
+}
+
+function fmtDue(ts){ const d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function fmtDur(ms){ const s=Math.floor(ms/1000); const h=Math.floor(s/3600); const m=Math.floor((s%3600)/60); const ss=s%60; return (h>0?h+'小时':'')+m+'分'+(h===0?ss+'秒':''); }
+
+function nearestDue(){ let best=null; const now=Date.now(); for(const t of state.tasksAll){ if(t.due && t.due>now && !t.done){ if(!best||t.due<best.due) best=t; } } return best; }
+
+function summaryText(){
+  const w=state.weekly;
+  const per=(v,t)=>Math.round(v/t*100);
+  let s='📊 你的工作台当前状态：\n';
+  s+='🟡 LV'+state.level+'  XP '+state.xp+'/'+state.xpToNext+'  🪙 '+state.mucoins+'  🔥 连签 '+state.streak+' 天\n';
+  s+='本周目标：学习 '+w.study+'/'+w.targetStudy+' · 运动 '+w.exercise+'/'+w.targetExercise+' · 复盘 '+w.review+'/'+w.targetReview+'\n';
+  const used=state.budget.personal+state.budget.company+state.budget.other;
+  s+='本月支出：'+used+' / '+state.budget.limit+' 元（个人 '+state.budget.personal+'）\n';
+  const undone=state.tasksAll.filter(x=>!x.done).length;
+  s+='未完成待办：'+undone+' 条';
+  return s;
+}
+
+/* ============ 渲染 ============ */
+let curView='overview';
+const TITLES={overview:'工作台概览',chat:'与琥珀对话',goals:'目标进度',tasks:'待办任务',research:'科研 / 学习',finance:'财务管理',exercise:'运动健康',skills:'技能中心',photos:'相册',review:'复盘系统',ach:'成就墙'};
+
+function render(){
+  normalize();
+  document.getElementById('tLv').textContent=state.level;
+  document.getElementById('tCoin').textContent=state.mucoins;
+  document.getElementById('tStreak').textContent=state.streak;
+  document.getElementById('tXpFill').style.width=Math.min(100,state.xp/state.xpToNext*100)+'%';
+  document.getElementById('tXpTxt').textContent='XP '+state.xp+' / '+state.xpToNext;
+  document.getElementById('viewTitle').textContent=TITLES[curView];
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.v===curView));
+  const v=document.getElementById('view');
+  if(curView==='overview') v.innerHTML=viewOverview();
+  else if(curView==='chat') v.innerHTML=viewChat();
+  else if(curView==='goals') v.innerHTML=viewGoals();
+  else if(curView==='tasks') v.innerHTML=viewTasks();
+  else if(curView==='research') v.innerHTML=viewResearch();
+  else if(curView==='finance') v.innerHTML=viewFinance();
+  else if(curView==='exercise') v.innerHTML=viewExercise();
+  else if(curView==='skills') v.innerHTML=viewSkills();
+  else if(curView==='photos') v.innerHTML=viewPhotos();
+  else if(curView==='review') v.innerHTML=viewReview();
+  else if(curView==='ach') v.innerHTML=viewAch();
+  bindView();
+}
+
+function viewOverview(){
+  const w=state.weekly, b=state.budget;
+  const used=b.personal+b.company+b.other;
+  const undone=state.tasksAll.filter(x=>!x.done).length;
+  const due=nearestDue();
+  return `
+  <div class="grid g4">
+    <div class="card"><h3>🟡 等级</h3><div class="big">LV${state.level}</div><div class="sub">XP ${state.xp}/${state.xpToNext}</div></div>
+    <div class="card"><h3>🪙 木币</h3><div class="big">${state.mucoins}</div><div class="sub">完成行动可赚取</div></div>
+    <div class="card"><h3>🔥 连续签到</h3><div class="big">${state.streak}<span style="font-size:14px">天</span></div><div class="sub">最长 ${state.longestStreak} 天</div></div>
+    <div class="card"><h3>📝 待办</h3><div class="big">${undone}</div><div class="sub">条未完成</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <h3>🎯 本周目标</h3>
+      ${bar('学习打卡',w.study,w.targetStudy)}
+      ${bar('运动达标',w.exercise,w.targetExercise)}
+      ${bar('每日复盘',w.review,w.targetReview)}
+    </div>
+    <div class="card">
+      <h3>💰 本月预算（个人支出上限 ${b.limit}）</h3>
+      ${bar('已用 / 上限',used,b.limit,'gold')}
+      <div class="row" style="margin-top:10px"><span class="sub">个人</span><b>${b.personal} 元</b></div>
+      <div class="row"><span class="sub">公司垫付</span><b>${b.company} 元</b></div>
+      <div class="row"><span class="sub">其他</span><b>${b.other} 元</b></div>
+      ${used>b.limit*0.9?'<div style="margin-top:10px;color:#e06a6a;font-size:12px">⚠️ 预算即将/已经超支，注意控制～</div>':''}
+    </div>
+  </div>
+  ${due?`<div class="card" style="margin-top:14px;border-color:var(--pink)"><h3>⏰ 最近倒计时</h3><div class="big" style="font-size:18px">${escapeHtml(due.text)}</div><div class="sub">⏳ 还有 ${fmtDur(due.due-Date.now())}（${fmtDue(due.due)}）</div></div>`:''}
+  <div class="card" style="margin-top:14px">
+    <h3>⚡ 快捷操作</h3>
+    <div class="chips">
+      <span class="chip" onclick="quick('今天学习2小时')">📖 学习打卡</span>
+      <span class="chip" onclick="quick('运动40分钟')">🏃 运动打卡</span>
+      <span class="chip" onclick="App.goChat('复盘：今天……')">🪞 写复盘</span>
+      <span class="chip" onclick="App.goChat('加待办 ')">📝 加待办</span>
+      <span class="chip" onclick="App.goChat('支出 0 个人')">💸 记支出</span>
+      <span class="chip" onclick="App.goChat('我的状态')">📊 看状态</span>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>🌐 外部资源 / 常用跳转（联网）</h3>
+    <div class="chips">
+      <a class="chip" href="https://www.ximalaya.com/search/%E9%BD%90%E6%98%8A" target="_blank" rel="noopener">🎓 齐昊·喜马拉雅</a>
+      <a class="chip" href="https://www.ximalaya.com/search/%E5%A4%8F%E8%AF%B4%E8%8B%B1%E6%96%87" target="_blank" rel="noopener">🗣 夏鹏·喜马拉雅</a>
+      <a class="chip" href="https://www.xiaoyuzhoufm.com/episode/6397e4f53a2b7eba5ceb4572" target="_blank" rel="noopener">🎧 夏鹏最新单集</a>
+      <a class="chip" href="https://www.alipay.com" target="_blank" rel="noopener">💰 支付宝</a>
+      <a class="chip" href="https://pay.weixin.qq.com" target="_blank" rel="noopener">💚 微信支付</a>
+      <a class="chip" href="https://www.keep.com" target="_blank" rel="noopener">🏃 Keep运动</a>
+      <a class="chip" href="https://news.cctv.com" target="_blank" rel="noopener">📺 央视新闻</a>
+    </div>
+    <div class="sub" style="margin-top:6px">点任意标签会在新标签打开对应平台/APP网页版；手机上部分会直接唤起对应 APP。</div>
+  </div>`;
+}
+function bar(label,v,t,cls=''){
+  const p=Math.min(100,Math.round(v/t*100));
+  return `<div style="margin-bottom:10px"><div class="row"><span>${label}</span><span class="sub">${v}/${t}</span></div><div class="bar ${cls}"><div style="width:${p}%"></div></div></div>`;
+}
+
+function viewChat(){
+  const msgs=state.chat.map(m=>`<div class="msg ${m.role}">${escapeHtml(m.text)}</div>`).join('');
+  return `<div class="chat">
+    <div class="msgs" id="msgs">${msgs}</div>
+    <div class="chips">
+      <span class="chip" onclick="quick('今天学习2小时')">学习2h</span>
+      <span class="chip" onclick="quick('运动40分钟')">运动40min</span>
+      <span class="chip" onclick="quick('走了6000步')">6000步</span>
+      <span class="chip" onclick="quick('提醒我明天15:00交报告（重要）')">加提醒</span>
+      <span class="chip" onclick="quick('复盘：今天……')">写复盘</span>
+      <span class="chip" onclick="quick('加待办 示例任务')">加待办</span>
+      <span class="chip" onclick="quick('支出 35 午饭 个人')">记支出</span>
+      <span class="chip" onclick="quick('我的状态')">看状态</span>
+    </div>
+    <div class="inputbar">
+      <button class="iconbtn" id="micBtn" title="语音录入" onclick="startVoice()">🎤</button>
+      <input id="chatIn" placeholder="对琥珀说点什么…（如：今天学习2小时 / 提醒我明天15:00开会）" onkeydown="if(event.key==='Enter')sendChat()" />
+      <button class="iconbtn" title="拍照" onclick="openCamera()">📷</button>
+      <button class="btn" onclick="sendChat()">发送</button>
+    </div>
+  </div>`;
+}
+function sendChat(){const i=document.getElementById('chatIn');if(!i)return;const v=i.value;i.value='';handleInput(v);}
+function quick(t){ curView='chat'; render(); const i=document.getElementById('chatIn'); if(i){i.value=t.replace(/……|示例任务|0 个人/g,''); i.focus();} }
+
+function viewGoals(){
+  const w=state.weekly,b=state.budget; const used=b.personal+b.company+b.other;
+  return `<div class="grid g2">
+    <div class="card"><h3>🎯 本周目标（${state.weekStart.slice(0,10)} 起）</h3>
+      ${bar('学习打卡 '+w.study+'/'+w.targetStudy,w.study,w.targetStudy)}
+      ${bar('运动达标 '+w.exercise+'/'+w.targetExercise,w.exercise,w.targetExercise)}
+      ${bar('每日复盘 '+w.review+'/'+w.targetReview,w.review,w.targetReview)}
+      <div class="sub" style="margin-top:8px">目标：每天≥2h学习；每天≥30min活动/5000步；每日复盘。</div>
+    </div>
+    <div class="card"><h3>💰 月度预算</h3>
+      ${bar('已用 '+used+'/'+b.limit,used,b.limit,'gold')}
+      <div class="row" style="margin-top:8px"><span>个人支出</span><b>${b.personal}</b></div>
+      <div class="row"><span>公司垫付</span><b>${b.company}</b></div>
+      <div class="row"><span>其他</span><b>${b.other}</b></div>
+      <div class="sub" style="margin-top:8px">月度个人支出上限 ${b.limit} 元。可在「财务」中记账，或接入支付软件自动同步。</div>
+    </div>
+  </div>`;
+}
+
+function viewTasks(){
+  const item=(t,i,scope)=>`<div class="item ${t.done?'done':''}">
+    <div class="check ${t.done?'on':''}" onclick="App.toggleTask('${scope}',${i})">${t.done?'✓':''}</div>
+    <div class="main">${escapeHtml(t.text)}${t.important?' <span class="tag imp">⭐重要</span>':''}${t.due?` <span class="tag">⏰${fmtDue(t.due)}</span>`:''}<div class="sub">${t.date}</div></div>
+    <span class="btn sm ghost" onclick="App.delTask('${scope}',${i})">删除</span></div>`;
+  return `<div class="card"><h3>➕ 新增待办（可带时间，如「明天15:00」）</h3>
+    <div class="addbar"><input id="taskIn" placeholder="例如：明天15:00交月度报告" onkeydown="if(event.key==='Enter')App.addTask()"/>
+      <input id="taskDue" type="datetime-local" style="max-width:180px"/>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft)"><input type="checkbox" id="taskImp"/>重要</label>
+      <button class="btn" onclick="App.addTask()">添加</button></div></div>
+    <div class="grid g2">
+      <div class="card"><h3>📌 今日待办（${state.tasksToday.length}）</h3>
+        ${state.tasksToday.length?state.tasksToday.map((t,i)=>item(t,i,'today')).join(''):'<div class="empty">今天还没有待办</div>'}</div>
+      <div class="card"><h3>🗂 全部待办（${state.tasksAll.length}）</h3>
+        ${state.tasksAll.length?state.tasksAll.map((t,i)=>item(t,i,'all')).join(''):'<div class="empty">还没有待办</div>'}</div>
+    </div>`;
+}
+
+function renderPoints(pts){
+  if(!pts||!pts.length) return '<li class="sub">（无要点）</li>';
+  return pts.map(p=>{
+    if(typeof p==='string') return `<li>${escapeHtml(p)}</li>`;
+    const sub=(p.sub&&p.sub.length)?`<ul class="note-sub">${p.sub.map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ul>`:'';
+    return `<li class="note-item"><div class="note-t">${escapeHtml(p.t||'')}</div>${p.d?`<div class="note-d">${escapeHtml(p.d)}</div>`:''}${sub}</li>`;
+  }).join('');
+}
+function notesGroupedHtml(){
+  const CATS=['新闻联播','AI日报','财务日报','齐昊','夏鹏'];
+  const list=state.notes.map((n,idx)=>({n,idx,cat:(n&&n.cat)||'未分类'}));
+  const map={}; list.forEach(o=>{(map[o.cat]=map[o.cat]||[]).push(o);});
+  const keys=[]; CATS.forEach(c=>{if(map[c])keys.push(c);});
+  Object.keys(map).forEach(c=>{if(CATS.indexOf(c)<0)keys.push(c);});
+  if(!keys.length) return '<div class="empty">还没有笔记。对琥珀说「笔记 标题 | 要点1；要点2 | 链接」即可生成<b>要点笔记</b>（链接可留空，默认看要点即可）。</div>';
+  const card=(n,i)=>`<div class="note">
+      <div class="note-h"><b>📒 ${escapeHtml(n.title)}</b><span class="sub">${n.date||''}</span>${n.link?`<a class="btn sm ghost" href="${escapeHtml(n.link)}" target="_blank" rel="noopener">🔗 查看原文</a>`:''}<span class="btn sm ghost" onclick="App.del('notes',${i})">删</span></div>
+      <ol class="note-pts">${renderPoints(n.points)}</ol>
+    </div>`;
+  return keys.map(c=>`<div style="margin-top:10px"><div style="font-weight:700;color:var(--gold);margin:6px 0 4px">📁 ${escapeHtml(c)} <span class="sub">${map[c].length} 条</span></div>${map[c].map(o=>card(o.n,o.idx)).join('')}</div>`).join('');
+}
+function viewResearch(){
+  const lit=state.literature.map((l,i)=>`<div class="item"><div class="main">📄 ${escapeHtml(l.name)}<div class="sub">${l.date}</div></div><span class="btn sm ghost" onclick="App.del('literature',${i})">删除</span></div>`).join('');
+  const res=state.research.map((r,i)=>`<div class="item ${r.done?'done':''}"><div class="check ${r.done?'on':''}" onclick="App.toggleResearch(${i})">${r.done?'✓':''}</div><div class="main">🔬 ${escapeHtml(r.name)}<div class="sub">${r.date}</div></div><span class="btn sm ghost" onclick="App.del('research',${i})">删除</span></div>`).join('');
+  const idea=state.ideas.map((d,i)=>`<div class="item"><div class="main">💡 ${escapeHtml(d.name)}<div class="sub">${d.date}</div></div><span class="btn sm ghost" onclick="App.del('ideas',${i})">删除</span></div>`).join('');
+  const notesHtml=notesGroupedHtml();
+  return `<div class="card"><h3>📄 文献台账（${state.literature.length}）</h3>${lit||'<div class="empty">还没有文献，说「读了一篇 XXX」即可收录</div>'}</div>
+    <div class="card" style="margin-top:14px"><h3>🔬 科研任务（${state.research.length}）</h3>${res||'<div class="empty">暂无，说「科研任务 XXX」添加</div>'}</div>
+    <div class="card" style="margin-top:14px"><h3>💡 灵感想法箱（${state.ideas.length}）</h3>${idea||'<div class="empty">暂无灵感</div>'}</div>
+    <div class="card" style="margin-top:14px"><h3>⭐ 关注博主 / 订阅源（联网跳转）</h3>
+      <div class="item"><div class="main">🎓 <b>齐昊</b> · 前普华永道审计师<div class="sub">财务思维 / 内控 / 业财融合</div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        <a class="btn sm ghost" href="https://www.douyin.com/user/MS4wLjABAAAA5EVtpZzmzCvglHK4L2lfVZD7AvYXm8184tNGG-4hULTiTdTWNLySI3RfTvC2kD7C" target="_blank" rel="noopener">📱 抖音</a>
+        <a class="btn sm ghost" href="https://www.bilibili.com/read/cv41492074" target="_blank" rel="noopener">📺 B站</a>
+        <a class="btn sm ghost" href="https://www.ximalaya.com/search/%E9%BD%90%E6%98%8A" target="_blank" rel="noopener">🎧 喜马拉雅</a>
+        <a class="btn sm ghost" href="https://podcasts.apple.com/cn/podcast/008-%E8%AE%BA%E8%AF%AD-%E6%80%9D%E6%83%B3%E5%93%81%E8%AF%BB-%E6%B2%BB%E5%9B%BD%E4%B9%8B%E9%81%93/id1829910021" target="_blank" rel="noopener">🍎 Apple播客</a>
+        </div></div>
+      <div class="item" style="margin-top:8px"><div class="main">🗣 <b>夏鹏</b> · 友邻优课创始人<div class="sub">职场成长 / 英语晨读</div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        <a class="btn sm ghost" href="https://www.douyin.com/user/MS4wLjABAAAANGA5A5rGMRer1zDmp5sv0NBTkcPL5ZeHDjlRPF24C9rHLCf86hjJr_XWoyZ63l5Q" target="_blank" rel="noopener">📱 抖音</a>
+        <a class="btn sm ghost" href="https://space.bilibili.com/3546800797518640" target="_blank" rel="noopener">📺 B站</a>
+        <a class="btn sm ghost" href="https://www.ximalaya.com/search/%E5%A4%8F%E8%AF%B4%E8%8B%B1%E6%96%87" target="_blank" rel="noopener">🎧 喜马拉雅</a>
+        <a class="btn sm ghost" href="https://www.xiaoyuzhoufm.com/episode/6397e4f53a2b7eba5ceb4572" target="_blank" rel="noopener">🎙 小宇宙</a>
+        </div></div>
+      <div class="sub" style="margin-top:8px">点链接在手机/电脑打开；听完回来跟我说「文献 齐昊《XX》」或「笔记 标题 | 要点1；要点2 | 链接」即可收录要点笔记。</div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>📒 内容笔记（要点 + 跳转链接）</h3>
+      <div style="margin-bottom:8px"><button class="btn sm" onclick="App.openNote()">➕ 添加笔记</button></div>
+      ${notesHtml||'<div class="empty">还没有笔记。对琥珀说「笔记 标题 | 要点1；要点2 | 链接」即可生成<b>要点笔记</b>（链接可留空，默认看要点即可）。</div>'}
+    </div>`;
+}
+
+function viewFinance(){
+  const rows=state.finance.map((f,i)=>`<tr><td>${f.date}</td><td>${f.type==='收入'?'💰收入':'💸支出'}</td><td>${f.amount}</td><td><span class="tag ${f.cat==='company'?'c':f.cat==='other'?'o':'p'}">${f.cat==='income'?'收入':f.cat==='company'?'公司垫付':f.cat==='other'?'其他':'个人'}</span></td><td>${escapeHtml(f.note)}</td><td><span class="btn sm ghost" onclick="App.del('finance',${i})">删</span></td></tr>`).join('');
+  const used=state.budget.personal+state.budget.company+state.budget.other;
+  return `<div class="grid g3" style="margin-bottom:14px">
+    <div class="card"><h3>总支出</h3><div class="big">${used}</div><div class="sub">元（本月）</div></div>
+    <div class="card"><h3>总收入</h3><div class="big">${state.finance.filter(f=>f.type==='收入').reduce((s,f)=>s+f.amount,0)}</div><div class="sub">元</div></div>
+    <div class="card"><h3>净额</h3><div class="big">${state.finance.filter(f=>f.type==='收入').reduce((s,f)=>s+f.amount,0)-used}</div><div class="sub">元</div></div>
+  </div>
+  <div class="card"><h3>💰 收支明细</h3>
+    <table><thead><tr><th>日期</th><th>类型</th><th>金额</th><th>类别</th><th>备注</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan=6 class="empty">还没有记录，说「支出 35 午饭 个人」</td></tr>'}</tbody></table>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>📥 导入支付账单 + 每日提醒</h3>
+    <div class="sub" style="margin-top:6px;color:#e06a6a">⚠️ 当前手机支付软件（支付宝/微信）在 WorkBuddy 暂无可用连接器，琥珀不能自动读取你的支付数据。替代方案：在支付宝/微信里「导出账单」为 Excel/CSV，点下方导入，琥珀自动解析、每天10点提醒你分类（个人/公司垫付/其他）。</div>
+    <div class="addbar" style="margin-top:8px">
+      <button class="btn" onclick="App.importBill()">📥 导入账单文件</button>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft)"><input type="checkbox" id="billRemindChk" ${state.billRemind?'checked':''} onchange="App.setBillRemind(this.checked)"/> 每天10点提醒我分类当日消费</label>
+    </div>
+    <div id="billOut" class="sub"></div>
+  </div>`;
+}
+
+function viewExercise(){
+  const rows=state.exercise.map((e,i)=>`<div class="item"><div class="main">🏃 ${e.min?e.min+' 分钟':''} ${e.steps?e.steps+' 步':''}<div class="sub">${e.date}</div></div><span class="btn sm ghost" onclick="App.del('exercise',${i})">删除</span></div>`).join('');
+  const cnt=state.exercise.length, thisWeek=state.weekly.exercise;
+  return `<div class="grid g3" style="margin-bottom:14px">
+    <div class="card"><h3>累计运动次数</h3><div class="big">${cnt}</div></div>
+    <div class="card"><h3>本周达标</h3><div class="big">${thisWeek}</div><div class="sub">/ ${state.weekly.targetExercise} 天</div></div>
+    <div class="card"><h3>目标</h3><div class="big" style="font-size:18px">每天≥30min<br>≥5000步</div></div>
+  </div>
+  <div class="card"><h3>🏃 运动记录</h3>${rows||'<div class="empty">还没有记录，说「运动40分钟」或「走了6000步」</div>'}</div>`;
+}
+
+function viewSkills(){
+  const cards=[
+    {e:'📊',n:'数据分析',d:'上传Excel自动统计+图表',f:"Skills.open('data')"},
+    {e:'📑',n:'做PPT',d:'输入大纲生成可下载PPT',f:"Skills.open('ppt')"},
+    {e:'🎨',n:'做图片',d:'模板海报/卡片生成PNG',f:"Skills.open('image')"},
+    {e:'📄',n:'做文档',d:'生成Word文档(.docx)',f:"Skills.open('doc')"},
+    {e:'🧠',n:'思维导图',d:'大纲一键生成脑图',f:"Skills.open('mind')"},
+    {e:'🔤',n:'文字转语音',d:'输入文字朗读(中文)',f:"Skills.open('tts')"},
+    {e:'🌐',n:'翻译',d:'中英互译(联网)',f:"Skills.open('translate')"},
+    {e:'📋',n:'简历/周报',d:'生成Word文档',f:"Skills.open('resume')"},
+    {e:'⏱️',n:'专注计时',d:'番茄钟+自动提醒',f:"Skills.open('pomodoro')"},
+    {e:'🧮',n:'计算器',d:'快速计算',f:"Skills.open('calc')"},
+    {e:'📥',n:'更多导入',d:'Excel/图片/文本导入',f:"App.openData()"},
+  ];
+  return `<div class="grid g3">
+    ${cards.map(c=>`<div class="skill" onclick="${c.f}"><div class="emo">${c.e}</div><b>${c.n}</b><small>${c.d}</small></div>`).join('')}
+  </div>
+  <div class="card" style="margin-top:14px"><h3>💡 技能说明</h3>
+    <div class="sub" style="line-height:1.8">
+    · 所有技能均在你本机浏览器运行，数据不出本地（除非开启云端同步）。<br>
+    · 做PPT / 做文档 / 数据分析 使用本地库，<b>离线也能用</b>。<br>
+    · 做图片为模板化生成；如需 AI 生成式图片，可在对话中让我（WorkBuddy）代劳。<br>
+    · 想接大模型让琥珀更聪明？告诉我，我帮你接入 API。
+    </div></div>`;
+}
+
+function viewPhotos(){
+  const rows=state.photos.map((p,i)=>`<div class="photo"><img src="${p.url}" alt=""><div class="cap">${escapeHtml(p.note||'')}<br>${p.date}${p.task?' · '+escapeHtml(p.task):''}<br><span class="btn sm ghost" onclick="App.delPhoto(${i})">删除</span></div></div>`).join('');
+  return `<div class="card" style="margin-bottom:14px"><h3>📷 拍照 / 上传</h3>
+    <div class="addbar">
+      <button class="btn" onclick="openCamera()">📷 拍照</button>
+      <button class="btn ghost" onclick="document.getElementById('fileImg').click()">🖼️ 上传图片</button>
+      <input id="photoNote" placeholder="这张图备注（可选）" style="flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px"/>
+    </div></div>
+    <div class="card"><h3>🖼️ 相册（${state.photos.length}）</h3>
+    ${state.photos.length?`<div class="photos">${rows}</div>`:'<div class="empty">还没有照片，点「拍照」试试（手机端可直接调用摄像头）</div>'}</div>`;
+}
+
+function viewReview(){
+  const rows=state.reviews.map((r,i)=>`<div class="item"><div class="main">🪞 ${escapeHtml(r.text)}<div class="sub">${r.date}</div></div><span class="btn sm ghost" onclick="App.del('reviews',${i})">删除</span></div>`).join('');
+  return `<div class="card"><h3>✍️ 写今日复盘</h3>
+    <div class="addbar"><input id="revIn" placeholder="今天做了什么、感受、明天怎么调整…" onkeydown="if(event.key==='Enter')App.addReview()"/><button class="btn" onclick="App.addReview()">保存复盘</button></div>
+    <div class="addbar"><button class="btn ghost" onclick="openCamera('review')">📷 拍一张贴进复盘</button></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>🪞 复盘历史（${state.reviews.length}）</h3>${rows||'<div class="empty">还没有复盘，说「复盘：今天……」</div>'}</div>`;
+}
+
+function viewAch(){
+  return `<div class="grid g3">
+    ${state.achievements.map(a=>`<div class="ach ${a.got?'on':''}"><div class="medal">${a.got?'🏆':'🔒'}</div><b>${a.name}</b><small>${a.desc}</small></div>`).join('')}
+  </div>`;
+}
+
+/* ============ 头像更换 ============ */
+function changeAvatar(){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='image/png,image/jpeg,image/gif,image/webp';
+  inp.onchange=function(e){
+    const f=e.target.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=function(){
+      const a=document.querySelector('.logo .ava');
+      if(a){ a.innerHTML='<img src="'+r.result+'" alt="头像" onerror="this.parentNode.textContent=\'🟡\'"/>'; }
+      localStorage.setItem('hupo_avatar', r.result);
+      syncFavicon(r.result);
+      toast('头像已更新（手机图标也已同步）');
+    };
+    r.readAsDataURL(f);
+  };
+  inp.click();
+}
+function loadAvatar(){
+  const src=localStorage.getItem('hupo_avatar');
+  if(src){
+    const a=document.querySelector('.logo .ava');
+    if(a){ a.innerHTML='<img src="'+src+'" alt="头像" onerror="this.parentNode.textContent=\'🟡\'"/>'; }
+    syncFavicon(src);
+  }
+}
+function syncFavicon(href){
+  const links=[
+    {sel:'link[rel="icon"]', rel:'icon'},
+    {sel:'link[rel="apple-touch-icon"]', rel:'apple-touch-icon'}
+  ];
+  links.forEach(o=>{
+    let l=document.querySelector(o.sel);
+    if(!l){ l=document.createElement('link'); l.rel=o.rel; document.head.appendChild(l); }
+    l.href=href;
+    if(!href.startsWith('data:')) l.sizes='512x512';
+  });
+}
+window.addEventListener('DOMContentLoaded', loadAvatar);
+
+/* ============ 事件绑定 ============ */
+function bindView(){ document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>{curView=b.dataset.v;render();}); }
+
+/* ============ 对外接口 ============ */
+const App = {
+  goChat(prefill){ curView='chat'; render(); const i=document.getElementById('chatIn'); if(i){i.value=prefill||''; i.focus();} },
+  addTask(){
+    const i=document.getElementById('taskIn'); if(!i||!i.value.trim())return;
+    const txt=i.value.trim();
+    const dueEl=document.getElementById('taskDue'); const dueVal=dueEl&&dueEl.value? new Date(dueEl.value).getTime():null;
+    const impEl=document.getElementById('taskImp'); const imp=impEl&&impEl.checked;
+    const item={text:txt,done:false,date:todayStr(),due:dueVal,important:imp};
+    state.tasksAll.unshift(item); state.tasksToday.unshift(item);
+    i.value=''; if(dueEl)dueEl.value=''; if(impEl)impEl.checked=false;
+    save(); render(); toast('已添加待办'+(dueVal?'（含提醒）':''));
+  },
+  toggleTask(scope,i){const arr=scope==='today'?state.tasksToday:state.tasksAll;const it=arr[i];if(!it)return;const all=state.tasksAll.find(x=>x.text===it.text&&x.date===it.date&&x.due===it.due);if(all)all.done=!all.done;it.done=all?all.done:!it.done;save();render();},
+  delTask(scope,i){const arr=scope==='today'?state.tasksToday:state.tasksAll;const it=arr[i];if(it)state.tasksAll=state.tasksAll.filter(x=>!(x.text===it.text&&x.date===it.date&&x.due===it.due));arr.splice(i,1);save();render();},
+  toggleResearch(i){state.research[i].done=!state.research[i].done;save();render();},
+  addReview(){const i=document.getElementById('revIn');if(!i||!i.value.trim())return;state.reviews.unshift({date:todayStr(),text:i.value.trim()});state.weekly.review+=1;const lv=gainXP(REWARDS.review.xp,REWARDS.review.coin);unlockAch('first_review');i.value='';save();render();toast('复盘已保存 +'+REWARDS.review.xp+'XP');},
+  del(type,i){state[type].splice(i,1);save();render();},
+  delPhoto(i){state.photos.splice(i,1);save();render();},
+  syncNow(){ setSyncStatus('syncing'); syncPush(); setTimeout(syncPull, 600); toast('已触发同步'); },
+  openData(){ DataModal.open(); },
+  openNote(){
+    openModal(`<h2>📒 添加内容笔记 <button class="close" onclick="closeModal()">✕</button></h2>
+      <label>标题（如：夏鹏《如何写周报》/ 8.11 新闻联播）</label>
+      <input id="noteTitle" placeholder="标题"/>
+      <label>分类（归类到科研学习模块下的目录）</label>
+      <select id="noteCat">
+        <option>新闻联播</option><option>AI日报</option><option>财务日报</option><option>齐昊</option><option>夏鹏</option><option>未分类</option>
+      </select>
+      <label>核心要点（每条一行，只写整理后的要点）</label>
+      <textarea id="notePts" rows="6" placeholder="1. 写周报 4 个原则让领导主动加薪&#10;2. 先结论后细节&#10;3. 用数据量化成果"></textarea>
+      <label>跳转链接（可留空；用于按需查看原文）</label>
+      <input id="noteLink" placeholder="https://...（选填）"/>
+      <div class="addbar" style="margin-top:12px"><button class="btn" onclick="App.saveNote()">💾 保存笔记</button><button class="btn ghost" onclick="closeModal()">取消</button></div>
+      <div class="sub" style="margin-top:8px">保存后默认展示要点，链接仅作按需查阅，不强制点击。</div>`);
+  },
+  saveNote(){
+    const title=(document.getElementById('noteTitle').value||'').trim()||'未命名笔记';
+    const points=(document.getElementById('notePts').value||'').split('\n').map(s=>s.trim().replace(/^[\d]+\.?\s*/,'')).filter(Boolean);
+    const link=(document.getElementById('noteLink').value||'').trim();
+    const cat=(document.getElementById('noteCat')?document.getElementById('noteCat').value:'')||'未分类';
+    state.notes.unshift({title, points, link, date:todayStr(), cat:cat});
+    save(); render(); closeModal(); toast('已保存要点笔记');
+  },
+  importBill(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.xlsx,.xls,.csv'; inp.onchange=function(e){ const f=e.target.files[0]; if(!f){return;} const r=new FileReader();
+    r.onload=()=>{ try{ let rows;
+      if(f.name.toLowerCase().endsWith('.csv')){ const wb=XLSX.read(r.result,{type:'string'}); rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]); }
+      else { const wb=XLSX.read(new Uint8Array(r.result),{type:'array'}); rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]); }
+      const imported=rows.map(row=>{ const o={}; for(const k in row){ o[String(k).trim().toLowerCase()]=row[k]; }
+        const rawAmt=parseFloat(String(o['金额']||o['amount']||o['交易金额']||o['收/支']||0).replace(/[^\d.\-]/g,''))||0;
+        const note=o['商品']||o['交易对方']||o['remark']||o['备注']||o['name']||o['交易摘要']||'';
+        const date=String(o['日期']||o['date']||o['交易时间']||todayStr()).slice(0,10);
+        const isIncome=(o['收/支']==='收入'||o['type']==='收入'||rawAmt<0);
+        return {date, type:isIncome?'收入':'支出', amount:Math.abs(rawAmt), cat:'personal', note:String(note)};
+      }).filter(x=>x.amount>0);
+      state._pendingBill=imported; save();
+      const out=document.getElementById('billOut');
+      if(out){ out.innerHTML='已导入 <b>'+imported.length+'</b> 笔，请逐笔选类别后点「保存入账」：<div id="billList" style="margin:6px 0"></div><button class="btn" onclick="App.saveBill()">✅ 保存入账</button>';
+        const list=document.getElementById('billList');
+        if(list){ list.innerHTML=imported.map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;margin:4px 0;font-size:13px"><span style="flex:1">${x.date} ${x.type==='收入'?'+':''}${x.amount} ${escapeHtml(x.note).slice(0,24)}</span><select id="bc${i}" onchange="App.setBillCat(${i},this.value)" style="padding:4px"><option value="personal">个人</option><option value="company">公司垫付</option><option value="other">其他</option></select></div>`).join(''); }
+      }
+      toast('导入成功，请分类'); 
+    }catch(err){ const out=document.getElementById('billOut'); if(out){out.innerHTML='解析失败：'+err.message;} } };
+    if(f.name.toLowerCase().endsWith('.csv')){ r.readAsText(f); } else { r.readAsArrayBuffer(f); }
+  }; inp.click(); },
+  setBillCat(i,cat){ if(state._pendingBill&&state._pendingBill[i]){ state._pendingBill[i].cat=cat; } },
+  saveBill(){ if(!state._pendingBill||!state._pendingBill.length){ toast('没有待保存的账单'); return; }
+    state._pendingBill.forEach(x=>{ state.finance.unshift({date:x.date,type:x.type,amount:x.amount,cat:x.cat,note:x.note}); });
+    const lv=gainXP(REWARDS.finance.xp,REWARDS.finance.coin); state._pendingBill=[]; save(); render(); toast('账单已入账 +'+REWARDS.finance.xp+'XP'); },
+  setBillRemind(on){ state.billRemind=on; save(); if(on && 'Notification' in window && Notification.permission==='default'){ try{ Notification.requestPermission(); }catch(e){} } toast(on?'已开启每日10点消费提醒':'已关闭提醒'); },
+};
+window.App=App; window.quick=quick; window.sendChat=sendChat;
+
+/* ============ 语音录入 ============ */
+let voiceRec=null, voiceActive=false;
+function startVoice(){
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('当前浏览器不支持语音，请用 Chrome/Edge'); return; }
+  if(voiceActive){ if(voiceRec)voiceRec.stop(); return; }
+  voiceRec=new SR(); voiceRec.lang='zh-CN'; voiceRec.interimResults=false; voiceRec.maxAlternatives=1;
+  voiceRec.onstart=()=>{ voiceActive=true; const b=document.getElementById('micBtn'); if(b){b.classList.add('recording');} toast('正在聆听…说完自动填入'); };
+  voiceRec.onresult=(e)=>{ const t=e.results[0][0].transcript; const i=document.getElementById('chatIn'); if(i){ i.value=(i.value?i.value+' ':'')+t; i.focus(); } };
+  voiceRec.onerror=()=>toast('语音识别出错，请重试');
+  voiceRec.onend=()=>{ voiceActive=false; const b=document.getElementById('micBtn'); if(b)b.classList.remove('recording'); };
+  try{ voiceRec.start(); }catch(e){ toast('无法启动语音'); }
+}
+
+/* ============ 拍照 ============ */
+let cameraStream=null, cameraFor='';
+function openCamera(forView){
+  cameraFor = forView||'';
+  const root=document.getElementById('modalRoot');
+  root.innerHTML=`<div class="modal-mask" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h2>📷 拍照 <button class="close" onclick="closeCamera()">✕</button></h2>
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="addbar" style="margin-top:12px">
+      <button class="btn" onclick="capturePhoto()">📸 拍摄</button>
+      <button class="btn ghost" onclick="closeCamera()">取消</button>
+    </div>
+    <canvas id="camCanvas" style="display:none"></canvas>
+  </div></div>`;
+  const v=document.getElementById('camVideo');
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+      .then(s=>{ cameraStream=s; v.srcObject=s; })
+      .catch(()=>{ v.outerHTML='<div class="preview">⚠️ 无法访问摄像头（桌面端无摄像头或权限被拒）。可改用「上传图片」。</div>'; });
+  } else { v.outerHTML='<div class="preview">当前环境不支持摄像头，请用「上传图片」。</div>'; }
+}
+function capturePhoto(){
+  const v=document.getElementById('camVideo'); const c=document.getElementById('camCanvas'); if(!v||!c)return;
+  c.width=v.videoWidth||640; c.height=v.videoHeight||480;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  const url=c.toDataURL('image/png');
+  const noteEl=document.getElementById('photoNote'); const note=(noteEl&&noteEl.value)||'';
+  state.photos.unshift({date:todayStr(), url, note, task: cameraFor==='review'?'复盘配图':''});
+  save();
+  if(cameraFor==='review'){ state.reviews.unshift({date:todayStr(), text:'[图片复盘] '+(note||'')}); state.weekly.review+=1; gainXP(REWARDS.review.xp,REWARDS.review.coin); unlockAch('first_review'); }
+  closeCamera(); curView='photos'; render(); toast('照片已存入相册');
+}
+function closeCamera(){ if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;} closeModal(); }
+
+/* ============ 弹窗通用 ============ */
+function openModal(html){ document.getElementById('modalRoot').innerHTML=`<div class="modal-mask" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`; }
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+
+/* ============ 数据导入导出 ============ */
+const DataModal={
+  open(){
+    openModal(`<h2>📦 数据管理 <button class="close" onclick="closeModal()">✕</button></h2>
+      <div class="sub" style="line-height:1.9">
+      <b>导出：</b><br>
+      <button class="btn sm ghost" onclick="DataModal.exportJSON()">⬇️ JSON 备份</button>
+      <button class="btn sm ghost" onclick="DataModal.exportXlsx()">⬇️ Excel(xlsx)</button>
+      <button class="btn sm ghost" onclick="DataModal.exportDocx()">⬇️ 月度复盘(docx)</button>
+      <button class="btn sm ghost" onclick="DataModal.exportPptx()">⬇️ 概览(PPT)</button>
+      <button class="btn sm ghost" onclick="DataModal.exportPng()">⬇️ 仪表盘图片(PNG)</button>
+      <br><br><b>导入：</b><br>
+      <button class="btn sm ghost" onclick="document.getElementById('fileJson').click()">⬆️ JSON 备份</button>
+      <button class="btn sm ghost" onclick="document.getElementById('fileXlsx').click()">⬆️ Excel 数据</button>
+      <button class="btn sm ghost" onclick="document.getElementById('fileImg').click()">⬆️ 图片到相册</button>
+      <br><br><b>同步方式：</b><br>
+      <label style="margin-right:14px"><input type="radio" name="syncmode" value="local" ${syncProvider==='local'?'checked':''} onchange="setProvider('local')"> 连本机（电脑常开/局域网）</label>
+      <label><input type="radio" name="syncmode" value="gitee" ${syncProvider==='gitee'?'checked':''} onchange="setProvider('gitee')"> 云端中转 Gitee（电脑关机也能用）</label>
+      <div id="giteeBox" style="${syncProvider==='gitee'?'':'display:none'}">
+        <b>① 去 Gitee 创建私人令牌（你本人登录密码，我不接触）：</b><br>
+        <button class="btn" onclick="window.open('https://gitee.com/profile/personal_access_tokens/new','_blank')">🚀 去 Gitee 一键创建令牌</button>
+        <div class="sub" style="line-height:1.85">
+          打开后按提示登录（输入 Gitee 密码是你自己操作）：<br>
+          1) 右上角头像 → <b>设置 Settings</b><br>
+          2) 左侧 → <b>私人令牌 Personal Access Tokens</b><br>
+          3) → <b>生成新令牌 Generate new token</b><br>
+          4) 权限<b>勾选 projects</b>（仓库读写，含数据同步所需）；描述随便填如「琥珀管家」<br>
+          5) 点 <b>提交 Submit</b>，复制整串令牌（想长期用就选长过期或不选过期）<br>
+          ⚠️ 部署页面用的 <b>Gitee Pages 需要实名认证</b>（账号设置 → 实名认证，约 1–3 工作日）。未实名也能先把数据同步上云；页面要等实名通过后，在仓库「服务 → Gitee Pages」点「启动」即可。
+        </div>
+        <br><b>② 粘贴令牌并验证：</b><br>
+        <input id="gtTokenIn" type="password" value="${gtToken}" placeholder="粘贴 Gitee 私人令牌" style="width:100%;margin:4px 0"/>
+        <button class="btn" onclick="DataModal.verifyToken()">验证并保存</button>
+        <span id="tokenInfo" class="sub"></span>
+        <div class="sub">令牌仅存本机浏览器，只用于读写你的 Gitee 仓库与部署 Pages。手机和电脑填<b>同一个令牌</b>即共享同一份数据（电脑关机也不影响）。数据存在<b>私有仓库</b>，不公开。</div>
+        <br><b>③ 部署到 Gitee Pages（生成永久常驻链接，电脑关机也能用）：</b><br>
+        <button class="btn" onclick="DataModal.deployPages()" ${gtToken?'':'disabled'}>🚀 一键部署（需有效令牌）</button>
+        <span id="deployInfo" class="sub"></span>
+      </div>
+      <div class="sub" id="localSyncBox" style="${syncProvider==='local'?'':'display:none'}">本地模式：手机和电脑用<b>同一个网址</b>打开、并填<b>相同密钥</b>，数据自动实时同步（依赖电脑常开）。</div>
+      <br><br><b>同步空间（本地模式）：</b><br>
+      <div class="addbar"><input id="syncKeyIn" value="${syncKey}" placeholder="同步空间密钥（电脑/手机填一样即可同步）"/><button class="btn" onclick="DataModal.setSync()">切换并同步</button></div>
+      </div>`);
+  },
+  setSync(){ const v=document.getElementById('syncKeyIn').value.trim(); if(!v){toast('密钥不能为空');return;} syncKey=v; localStorage.setItem('hupo_sync_key',v); lastSyncTs=0; syncPull(); setTimeout(syncPush,500); toast('已切换同步空间'); },
+  saveToken(){ gtToken=document.getElementById('gtTokenIn').value.trim(); if(!gtToken){toast('令牌不能为空');return;} localStorage.setItem('hupo_gt_token',gtToken); gtFileSha=''; localStorage.removeItem('hupo_gt_sha'); giteePush(); setTimeout(giteePull,900); toast('令牌已保存，正在同步'); },
+  // 验证令牌有效性并读取其权限范围
+  async verifyToken(){
+    const t=document.getElementById('gtTokenIn').value.trim();
+    if(!t){toast('请先粘贴令牌');return;}
+    const info=document.getElementById('tokenInfo'); if(info) info.textContent='验证中…';
+    try{
+      const r=await fetch(gtUrl('/user'),{headers:{'Authorization':'token '+t}});
+      if(!r.ok){ if(info) info.textContent='❌ 令牌无效（HTTP '+r.status+'）'; return; }
+      const me=await r.json();
+      gtToken=t; localStorage.setItem('hupo_gt_token',t);
+      gtOwner=me.login; localStorage.setItem('hupo_gt_owner',gtOwner);
+      gtFileSha=''; localStorage.removeItem('hupo_gt_sha');
+      if(info) info.innerHTML='✅ 登录身份：<b>'+escapeHtml(me.login||'')+'</b> ｜ 令牌可用（projects 权限，可同步也可部署）';
+      giteePush(); setTimeout(giteePull,900);
+      toast('令牌已保存，正在同步');
+    }catch(e){ if(info) info.textContent='❌ 网络异常：'+e.message; }
+  },
+  // 用令牌把本应用部署到 Gitee Pages（生成电脑关机也能用的常驻链接）
+  async deployPages(){
+    if(!gtToken||!gtOwner){toast('请先验证并保存令牌');return;}
+    const info=document.getElementById('deployInfo'); if(info) info.textContent='准备中…';
+    const headers={'Authorization':'token '+gtToken,'Content-Type':'application/json'};
+    const bufToBase64=buf=>{const b=new Uint8Array(buf);let s='';const c=0x8000;for(let i=0;i<b.length;i+=c)s+=String.fromCharCode.apply(null,b.subarray(i,i+c));return btoa(s);};
+    try{
+      if(info) info.textContent='正在创建仓库（页面公开 / 数据私有）…';
+      let r=await fetch(gtUrl('/user/repos'),{method:'POST',headers,body:JSON.stringify({name:gtPageRepo,private:false,auto_init:true})});
+      if(r.status!==201 && r.status!==400 && r.status!==422){ const e=await r.json().catch(()=>({})); if(info) info.textContent='❌ 建页面仓库失败（HTTP '+r.status+'）：'+(e.message||''); return; }
+      r=await fetch(gtUrl('/user/repos'),{method:'POST',headers,body:JSON.stringify({name:gtDataRepo,private:true,auto_init:true})});
+      if(r.status!==201 && r.status!==400 && r.status!==422){ const e=await r.json().catch(()=>({})); if(info) info.textContent='❌ 建数据仓库失败（HTTP '+r.status+'）：'+(e.message||''); return; }
+      const files=['index.html','avatar.png','icon.png','libs/chart.umd.min.js','libs/docx.umd.js','libs/html-to-image.js','libs/pptxgen.bundle.js','libs/xlsx.full.min.js'];
+      for(const f of files){
+        if(info) info.textContent='上传中：'+f;
+        const resp=await fetch(f,{cache:'no-store'}); if(!resp.ok){ if(info) info.textContent='❌ 读取 '+f+' 失败（请用本地服务器打开本页）'; return; }
+        const buf=await resp.arrayBuffer(); const b64=bufToBase64(buf);
+        const path=encodeURIComponent(f);
+        const ur=gtUrl('/repos/'+gtOwner+'/'+gtPageRepo+'/contents/'+path);
+        const pr=await fetch(ur,{method:'PUT',headers,body:JSON.stringify({message:'deploy '+f,content:b64,branch:'master'})});
+        if(!pr.ok){ const e=await pr.json().catch(()=>({})); if(info) info.textContent='❌ 上传 '+f+' 失败：'+(e.message||pr.status); return; }
+      }
+      if(info) info.textContent='写入同步数据…';
+      const body=JSON.stringify({ts:Date.now(), data:state, device:(navigator.userAgent||'').slice(0,40)});
+      const dur=gtUrl('/repos/'+gtOwner+'/'+gtDataRepo+'/contents/'+gtSyncPath);
+      const dexist=await fetch(dur,{headers}); let dsha=null; if(dexist.ok){ dsha=(await dexist.json()).sha; }
+      const dpayload={message:'init sync',content:b64u(body),branch:'master'}; if(dsha) dpayload.sha=dsha;
+      await fetch(dur,{method:'PUT',headers,body:JSON.stringify(dpayload)});
+      if(info) info.textContent='正在开启 Gitee Pages…';
+      const link='https://'+gtOwner+'.gitee.io/'+gtPageRepo+'/';
+      const pr2=await fetch(gtUrl('/repos/'+gtOwner+'/'+gtPageRepo+'/pages'),{method:'POST',headers,body:JSON.stringify({branch:'master',path:'/'})});
+      if(pr2.ok){ if(info) info.innerHTML='✅ 部署完成！常驻链接：<b>'+link+'</b>（电脑关机也能用，手机添加到主屏幕）'; toast('部署成功'); }
+      else { const e=await pr2.json().catch(()=>({})); if(info) info.innerHTML='⚠️ 页面仓库已就绪（'+link+'），但自动开启 Pages 失败：'+(e.message||pr2.status)+'。请完成实名认证后，到仓库「服务 → Gitee Pages」点「启动」即可。'; toast('仓库已建好，待实名后启动'); }
+    }catch(e){ if(info) info.textContent='❌ 部署异常：'+e.message; }
+  },
+  exportJSON(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); downloadBlob(blob,'琥珀管家备份.json'); toast('已导出 JSON'); },
+  exportXlsx(){
+    if(typeof XLSX==='undefined'){ toast('Excel 库未加载'); return; }
+    const wb=XLSX.utils.book_new();
+    const sheet=(name,rows)=>{ if(rows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), name); };
+    sheet('待办', state.tasksAll.map(t=>({内容:t.text,状态:t.done?'已完成':'未完成',重要:t.important?'是':'否',时间:t.due?fmtDue(t.due):'',日期:t.date})));
+    sheet('财务', state.finance.map(f=>({日期:f.date,类型:f.type,金额:f.amount,类别:f.cat,备注:f.note})));
+    sheet('运动', state.exercise.map(e=>({日期:e.date,分钟:e.min,步数:e.steps})));
+    sheet('复盘', state.reviews.map(r=>({日期:r.date,内容:r.text})));
+    sheet('科研', state.research.map(r=>({名称:r.name,状态:r.done?'已完成':'未完成',日期:r.date})));
+    sheet('文献', state.literature.map(l=>({名称:l.name,日期:l.date})));
+    sheet('灵感', state.ideas.map(d=>({内容:d.name,日期:d.date})));
+    XLSX.writeFile(wb,'琥珀管家数据.xlsx'); toast('已导出 Excel');
+  },
+  exportDocx(){
+    if(typeof docx==='undefined'){ toast('文档库未加载'); return; }
+    const w=state.weekly, b=state.budget, used=b.personal+b.company+b.other;
+    const children=[ new docx.Paragraph({text:'琥珀管家 · 月度复盘报告',heading:docx.HeadingLevel.HEADING_1}) ];
+    children.push(new docx.Paragraph({text:`报告月份：${state.budgetMonth}　生成日期：${todayStr()}`,heading:docx.HeadingLevel.HEADING_2}));
+    children.push(new docx.Paragraph({children:[new docx.TextRun({text:`当前等级 LV${state.level}，木币 ${state.mucoins}，连续签到 ${state.streak} 天。`})]}));
+    children.push(new docx.Paragraph({children:[new docx.TextRun({text:`本周目标：学习 ${w.study}/${w.targetStudy}，运动 ${w.exercise}/${w.targetExercise}，复盘 ${w.review}/${w.targetReview}。`})]}));
+    children.push(new docx.Paragraph({children:[new docx.TextRun({text:`本月支出合计 ${used} 元（个人 ${b.personal} / 公司垫付 ${b.company} / 其他 ${b.other}），预算上限 ${b.limit} 元。`})]}));
+    if(state.reviews.length){ children.push(new docx.Paragraph({text:'近期复盘',heading:docx.HeadingLevel.HEADING_2}));
+      state.reviews.slice(0,15).forEach(r=>children.push(new docx.Paragraph({children:[new docx.TextRun({text:`【${r.date}】${r.text}`})]}))); }
+    const doc=new docx.Document({sections:[{children}]});
+    docx.Packer.toBlob(doc).then(blob=>{ downloadBlob(blob,'琥珀管家月度复盘.docx'); toast('已导出 Word'); });
+  },
+  exportPptx(){
+    if(typeof PptxGenJS==='undefined'){ toast('PPT 库未加载'); return; }
+    const pptx=new PptxGenJS(); pptx.defineLayout({name:'W',width:10,height:5.63}); pptx.layout='W';
+    const s1=pptx.addSlide(); s1.background={color:'5B9CF0'};
+    s1.addText('琥珀管家 · 工作台概览',{x:0.5,y:2,fontSize:32,color:'FFFFFF',bold:true});
+    s1.addText(`LV${state.level} · 🪙${state.mucoins} · 🔥${state.streak}天`,{x:0.5,y:3.2,fontSize:18,color:'FFE9EF'});
+    const s2=pptx.addSlide(); s2.addText('本周目标',{x:0.5,y:0.4,fontSize:24,bold:true});
+    const w=state.weekly;
+    s2.addText([`学习打卡：${w.study}/${w.targetStudy}`,`运动达标：${w.exercise}/${w.targetExercise}`,`每日复盘：${w.review}/${w.targetReview}`],{x:0.8,y:1.3,fontSize:18,lineSpacingMultiple:1.4});
+    const s3=pptx.addSlide(); s3.addText('本月财务',{x:0.5,y:0.4,fontSize:24,bold:true});
+    const b=state.budget, used=b.personal+b.company+b.other;
+    s3.addText([`支出合计：${used} 元`,`个人：${b.personal} / 公司垫付：${b.company} / 其他：${b.other}`,`预算上限：${b.limit} 元`],{x:0.8,y:1.3,fontSize:18,lineSpacingMultiple:1.4});
+    pptx.writeFile({fileName:'琥珀管家概览.pptx'}).then(()=>toast('已导出 PPT'));
+  },
+  exportPng(){
+    const view=document.getElementById('view');
+    if(typeof htmlToImage==='undefined' || !view){ toast('图片导出不可用'); return; }
+    htmlToImage.toPng(view,{backgroundColor:'#ffffff'}).then(dataUrl=>{
+      const a=document.createElement('a'); a.href=dataUrl; a.download='琥珀仪表盘.png'; a.click(); toast('已导出图片');
+    }).catch(()=>toast('导出失败'));
+  }
+};
+window.DataModal=DataModal;
+
+/* 文件导入 */
+document.getElementById('fileJson').onchange=function(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{try{state=JSON.parse(r.result); save(); render(); toast('导入成功');}catch(err){toast('文件格式不对');}}; r.readAsText(f); e.target.value=''; };
+document.getElementById('fileXlsx').onchange=function(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{
+  try{ const wb=XLSX.read(new Uint8Array(r.result),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws);
+    let added=0;
+    rows.forEach(row=>{ const keys=Object.keys(row).map(k=>k.toLowerCase());
+      if(keys.some(k=>k.includes('金额')||k.includes('amount'))){ const amt=parseFloat(row['金额']||row['amount']||0); if(!isNaN(amt)){ const cat=(row['类别']||row['cat']||'personal'); state.finance.unshift({type:amt<0?'支出':'支出',amount:Math.abs(amt),cat:cat==='company'?'company':cat==='other'?'other':'personal',note:String(row['备注']||row['note']||''),date:String(row['日期']||row['date']||todayStr())}); if(cat!=='company'&&cat!=='other')state.budget.personal+=Math.abs(amt); added++; } }
+      else if(keys.some(k=>k.includes('内容')||k.includes('text')||k.includes('待办'))){ const txt=String(row['内容']||row['text']||row['待办']||''); if(txt){ state.tasksAll.unshift({text:txt,done:String(row['状态']||row['status']||'').includes('完成'),date:todayStr(),due:null,important:false}); state.tasksToday.unshift(state.tasksAll[0]); added++; } }
+    });
+    save(); render(); toast(added?('已导入 '+added+' 条记录'):'未识别到可导入的「金额/内容」列');
+  }catch(err){ toast('Excel 解析失败'); }
+}; r.readAsArrayBuffer(f); e.target.value=''; };
+document.getElementById('fileImg').onchange=function(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ const note=(document.getElementById('photoNote')||{}).value||''; state.photos.unshift({date:todayStr(),url:r.result,note}); save(); render(); toast('图片已加入相册'); }; r.readAsDataURL(f); e.target.value=''; };
+
+function downloadBlob(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+
+/* ============ 技能中心 ============ */
+const Skills={
+  open(type){
+    if(type==='data') return DataModal.open();
+    if(type==='ppt') return this.ppt();
+    if(type==='image') return this.image();
+    if(type==='doc') return this.doc();
+    if(type==='mind') return this.mind();
+    if(type==='data') return;
+    return this.data();
+  },
+  data(){
+    openModal(`<h2>📊 数据分析 <button class="close" onclick="closeModal()">✕</button></h2>
+      <input type="file" id="daFile" accept=".xlsx,.xls" style="margin:6px 0"/>
+      <div id="daSheet" class="addbar" style="display:none"><select id="daSheetSel"></select><button class="btn" onclick="Skills.daLoad()">加载</button></div>
+      <div id="daOut"></div>`);
+    document.getElementById('daFile').onchange=function(e){ const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+      r.onload=()=>{ try{ const wb=XLSX.read(new Uint8Array(r.result),{type:'array'}); const sel=document.getElementById('daSheetSel'); sel.innerHTML=wb.SheetNames.map(n=>`<option>${n}</option>`).join(''); document.getElementById('daSheet').style.display='flex'; Skills._wb=wb; }catch(err){ document.getElementById('daOut').innerHTML='<div class="preview">解析失败</div>'; } };
+      r.readAsArrayBuffer(f); e.target.value=''; };
+  },
+  daLoad(){
+    const wb=Skills._wb; if(!wb)return; const name=document.getElementById('daSheetSel').value; const ws=wb.Sheets[name]; const rows=XLSX.utils.sheet_to_json(ws);
+    if(!rows.length){ document.getElementById('daOut').innerHTML='<div class="preview">空表</div>'; return; }
+    const cols=Object.keys(rows[0]); const numCols=cols.filter(c=>rows.every(r=>typeof r[c]==='number'));
+    let statsHtml='<h3 style="margin:10px 0 6px;font-size:14px">📈 数值列统计</h3>';
+    numCols.forEach(c=>{ const arr=rows.map(r=>r[c]); const sum=arr.reduce((a,b)=>a+b,0); const avg=sum/arr.length; const mn=Math.min(...arr); const mx=Math.max(...arr);
+      statsHtml+=`<div class="row"><span>${c}</span><span class="sub">Σ${sum.toFixed(1)} · 均值${avg.toFixed(1)} · 最小${mn} · 最大${mx}</span></div>`; });
+    const txtCol=cols.find(c=>typeof rows[0][c]==='string')||cols[0];
+    let chartHtml='';
+    if(numCols.length){
+      const lab=rows.map(r=>String(r[txtCol]||'').slice(0,10)); const dat=rows.map(r=>r[numCols[0]]);
+      chartHtml=`<canvas id="daChart" height="120"></canvas>
+        <button class="btn sm ghost" style="margin-top:8px" onclick="Skills.daChartPng()">⬇️ 导出图表PNG</button>`;
+      setTimeout(()=>{ const ctx=document.getElementById('daChart'); if(ctx&&window.Chart){ new Chart(ctx,{type:'bar',data:{labels:lab,datasets:[{label:numCols[0],data:dat,backgroundColor:'#5b9cf0'}]},options:{responsive:true}}); } },50);
+    }
+    const tableHtml='<h3 style="margin:10px 0 6px;font-size:14px">🔍 预览（前 30 行）</h3><div class="preview"><table><thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+rows.slice(0,30).map(r=>'<tr>'+cols.map(c=>`<td>${escapeHtml(String(r[c]))}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
+    document.getElementById('daOut').innerHTML=statsHtml+chartHtml+tableHtml;
+  },
+  daChartPng(){ const c=document.getElementById('daChart'); if(!c){toast('无图表');return;} const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='分析图表.png'; a.click(); toast('已导出图表'); },
+  ppt(){
+    openModal(`<h2>📑 做PPT <button class="close" onclick="closeModal()">✕</button></h2>
+      <label>标题</label><input id="pptTitle" placeholder="例如：二季度工作总结"/>
+      <div class="row2"><div><label>副标题</label><input id="pptSub" placeholder="例如：行政综合管理"/></div><div><label>主题色</label><input id="pptColor" type="color" value="#5b9cf0" style="height:42px;padding:2px"/></div></div>
+      <label>要点（每行一条，自动分页）</label><textarea id="pptPoints" rows="8" placeholder="1. 目标达成情况&#10;2. 关键举措&#10;3. 存在问题&#10;4. 下一步计划"></textarea>
+      <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.pptGen()">🎬 生成并下载PPT</button><button class="btn ghost" onclick="closeModal()">取消</button></div>
+      </div></div>`);
+  },
+  pptGen(){
+    if(typeof PptxGenJS==='undefined'){ toast('PPT 库未加载'); return; }
+    const title=document.getElementById('pptTitle').value.trim()||'未命名演示';
+    const sub=document.getElementById('pptSub').value.trim();
+    const color=(document.getElementById('pptColor').value||'#5b9cf0').replace('#','');
+    const pts=document.getElementById('pptPoints').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const pptx=new PptxGenJS(); pptx.defineLayout({name:'W',width:10,height:5.63}); pptx.layout='W';
+    const s1=pptx.addSlide(); s1.background={color:color};
+    s1.addText(title,{x:0.6,y:1.8,fontSize:32,color:'FFFFFF',bold:true});
+    if(sub) s1.addText(sub,{x:0.6,y:3.0,fontSize:18,color:'FFE9EF'});
+    const per=5;
+    for(let i=0;i<pts.length;i+=per){
+      const s=pptx.addSlide(); s.background={color:'FFFFFF'};
+      s.addText('要点',{x:0.5,y:0.3,fontSize:22,bold:true,color:color});
+      s.addText(pts.slice(i,i+per).map(p=>({text:p,bullet:true,options:{indent:20}})),{x:0.8,y:1.1,fontSize:18,color:'333333',lineSpacingMultiple:1.3});
+    }
+    pptx.writeFile({fileName:title+'.pptx'}).then(()=>toast('已生成 PPT')).catch(()=>toast('生成失败'));
+    closeModal();
+  },
+  image(){
+    openModal(`<h2>🎨 做图片 <button class="close" onclick="closeModal()">✕</button></h2>
+      <label>模板</label><select id="imgTpl"><option value="reward">激励卡片</option><option value="schedule">日程卡片</option><option value="review">复盘卡片</option></select>
+      <label>主文字</label><input id="imgMain" placeholder="例如：坚持第 30 天"/>
+      <label>副文字</label><input id="imgSub" placeholder="例如：你比昨天的自己更强"/>
+      <label>Emoji</label><input id="imgEmo" value="🌟" style="width:80px"/>
+      <div class="row2"><div><label>背景色1</label><input id="imgC1" type="color" value="#5b9cf0" style="height:42px;padding:2px"/></div><div><label>背景色2</label><input id="imgC2" type="color" value="#ff9ec4" style="height:42px;padding:2px"/></div></div>
+      <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.imgGen()">🎨 生成预览</button><button class="btn ghost" onclick="Skills.imgDownload()">⬇️ 下载PNG</button></div>
+      <canvas id="imgCanvas" class="canvasprev" width="800" height="450"></canvas>`);
+  },
+  imgGen(){
+    const c=document.getElementById('imgCanvas'); if(!c)return; const ctx=c.getContext('2d');
+    const main=document.getElementById('imgMain').value||'主文字';
+    const sub=document.getElementById('imgSub').value||'';
+    const emo=document.getElementById('imgEmo').value||'🌟';
+    const c1=document.getElementById('imgC1').value, c2=document.getElementById('imgC2').value;
+    const g=ctx.createLinearGradient(0,0,800,450); g.addColorStop(0,c1); g.addColorStop(1,c2);
+    ctx.fillStyle=g; ctx.fillRect(0,0,800,450);
+    ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.fillRect(40,40,720,370);
+    ctx.textAlign='center';
+    ctx.font='90px serif'; ctx.fillStyle='#fff'; ctx.fillText(emo,400,170);
+    ctx.font='bold 44px sans-serif'; ctx.fillStyle='#fff'; ctx.fillText(main,400,270);
+    if(sub){ ctx.font='24px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.fillText(sub,400,330); }
+    ctx.font='16px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fillText('—— 琥珀的agent ——',400,400);
+  },
+  imgDownload(){ const c=document.getElementById('imgCanvas'); if(!c){toast('请先生成预览');return;} const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='琥珀图片.png'; a.click(); toast('已下载图片'); },
+  doc(){
+    openModal(`<h2>📄 做文档 <button class="close" onclick="closeModal()">✕</button></h2>
+      <label>标题</label><input id="docTitle" placeholder="例如：会议纪要"/>
+      <label>正文（每段一行）</label><textarea id="docBody" rows="10" placeholder="第一段…&#10;第二段…"></textarea>
+      <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.docGen()">📄 生成并下载 Word</button></div>`);
+  },
+  docGen(){
+    if(typeof docx==='undefined'){ toast('文档库未加载'); return; }
+    const title=document.getElementById('docTitle').value.trim()||'未命名文档';
+    const body=document.getElementById('docBody').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const children=[ new docx.Paragraph({text:title,heading:docx.HeadingLevel.HEADING_1}) ];
+    body.forEach(p=>children.push(new docx.Paragraph({children:[new docx.TextRun({text:p})]})));
+    const d=new docx.Document({sections:[{children}]});
+    docx.Packer.toBlob(d).then(blob=>{ downloadBlob(blob,title+'.docx'); toast('已生成文档'); closeModal(); }).catch(()=>toast('生成失败'));
+  },
+  mind(){
+    openModal(`<h2>🧠 思维导图 <button class="close" onclick="closeModal()">✕</button></h2>
+      <label>大纲（每行一项，前面加空格表示下一级）</label>
+      <textarea id="mindText" rows="10" placeholder="个人成长&#10;  学习&#10;    数据分析&#10;    英语&#10;  运动&#10;  财务"></textarea>
+      <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.mindGen()">🧠 生成脑图</button><button class="btn ghost" onclick="Skills.mindDownload()">⬇️ 下载SVG</button></div>
+      <div id="mindOut" class="preview"></div>`);
+  },
+  mindGen(){
+    const txt=document.getElementById('mindText').value;
+    const lines=txt.split('\n').map(s=>s.replace(/\t/g,'  ')).filter(l=>l.trim());
+    const root={name:'',children:[],depth:0}; const stack=[root];
+    lines.forEach(l=>{ const indent=l.length-l.trimStart().length; const name=l.trim().replace(/^[-*]\s*/,''); const node={name,children:[],depth:Math.floor(indent/2)};
+      while(stack.length>1 && stack[stack.length-1].depth>=node.depth) stack.pop();
+      stack[stack.length-1].children.push(node); stack.push(node); });
+    const tree=root.children[0]||{name:'中心',children:[]};
+    document.getElementById('mindOut').innerHTML=Skills.renderMind(tree,900,600);
+  },
+  renderMind(node,w,h){
+    function layout(n,depth,x,y){ n._x=x; n._y=y; if(n.children&&n.children.length){ const gap=58; const sy=y-((n.children.length-1)*gap)/2; n.children.forEach(c=>{ layout(c,depth+1,x+170,sy); sy+=gap; }); } }
+    layout(node,0,90,300);
+    let boxes='', lines='';
+    function draw(n){ const ww=120,hh=34; boxes+=`<rect x="${n._x}" y="${n._y-hh/2}" width="${ww}" height="${hh}" rx="10" fill="#eaf4ff" stroke="#5b9cf0"/><text x="${n._x+ww/2}" y="${n._y+5}" text-anchor="middle" font-size="13" fill="#3a3f55">${escapeHtml(n.name)}</text>`;
+      if(n.children) n.children.forEach(c=>{ lines+=`<line x1="${n._x+ww}" y1="${n._y}" x2="${c._x}" y2="${c._y}" stroke="#b69cf0" stroke-width="2"/>`; draw(c); }); }
+    draw(node);
+    return `<svg viewBox="0 0 ${w} ${h}" width="100%" xmlns="http://www.w3.org/2000/svg">${lines}${boxes}</svg>`;
+  },
+  mindDownload(){ const svg=document.querySelector('#mindOut svg'); if(!svg){toast('请先生成');return;} const s=new XMLSerializer().serializeToString(svg); const blob=new Blob([s],{type:'image/svg+xml'}); downloadBlob(blob,'思维导图.svg'); toast('已下载脑图'); },
+  /* ---- 新增常用技能 ---- */
+  tts(){ openModal(`<h2>🔤 文字转语音 <button class="close" onclick="closeModal()">✕</button></h2>
+    <label>输入要朗读的文字</label><textarea id="ttsText" rows="5" placeholder="把要读的内容贴这里…"></textarea>
+    <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.ttsPlay()">🔊 朗读</button><button class="btn ghost" onclick="Skills.ttsStop()">⏹ 停止</button></div>
+    <div class="sub" style="margin-top:8px">用浏览器自带语音合成（中文），离线可用，建议 Chrome/Edge。</div>`);
+    if(!('speechSynthesis' in window)){ document.getElementById('ttsText').value='（当前浏览器不支持语音合成，请换 Chrome/Edge）'; } },
+  ttsPlay(){ const t=document.getElementById('ttsText').value.trim(); if(!t)return; if(!('speechSynthesis' in window)){toast('浏览器不支持');return;} const u=new SpeechSynthesisUtterance(t); u.lang='zh-CN'; u.rate=1; speechSynthesis.cancel(); speechSynthesis.speak(u); toast('朗读中'); },
+  ttsStop(){ if('speechSynthesis' in window) speechSynthesis.cancel(); },
+  translate(){ openModal(`<h2>🌐 翻译 <button class="close" onclick="closeModal()">✕</button></h2>
+    <label>源语言</label><select id="trFrom"><option value="zh">中文</option><option value="en">英文</option></select>
+    <label>目标语言</label><select id="trTo"><option value="en">英文</option><option value="zh">中文</option></select>
+    <textarea id="trIn" rows="4" placeholder="输入要翻译的文字"></textarea>
+    <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.trDo()">🌐 翻译</button></div>
+    <div id="trOut" class="preview"></div>
+    <div class="sub" style="margin-top:6px">使用免费翻译接口，需联网。</div>`); },
+  async trDo(){ const q=document.getElementById('trIn').value.trim(); if(!q){toast('请输入');return;} const from=document.getElementById('trFrom').value,to=document.getElementById('trTo').value;
+    document.getElementById('trOut').innerHTML='翻译中…';
+    try{ const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(q)+'&langpair='+from+'|'+to); const j=await r.json();
+      document.getElementById('trOut').innerHTML=j.responseData?j.responseData.translatedText:'（翻译失败）'; toast('翻译完成'); }
+    catch(e){ document.getElementById('trOut').innerHTML='网络异常，请联网后重试'; } },
+  resume(){ openModal(`<h2>📋 简历 / 周报 <button class="close" onclick="closeModal()">✕</button></h2>
+    <label>标题</label><input id="rsTitle" placeholder="例如：本周工作周报"/>
+    <label>内容（每段一行）</label><textarea id="rsBody" rows="8" placeholder="一、本周完成…&#10;二、存在问题…&#10;三、下周计划…"></textarea>
+    <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Skills.resumeGen()">📄 生成并下载 Word</button></div>`); },
+  resumeGen(){ if(typeof docx==='undefined'){toast('文档库未加载');return;} const title=document.getElementById('rsTitle').value.trim()||'文档'; const body=document.getElementById('rsBody').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const ch=[new docx.Paragraph({text:title,heading:docx.HeadingLevel.HEADING_1})]; body.forEach(p=>ch.push(new docx.Paragraph({children:[new docx.TextRun({text:p})]})));
+    docx.Packer.toBlob(new docx.Document({sections:[{children:ch}]})).then(b=>{downloadBlob(b,title+'.docx');toast('已生成');closeModal();}).catch(()=>toast('失败')); },
+  pomodoro(){ openModal(`<h2>⏱ 专注计时 <button class="close" onclick="closeModal()">✕</button></h2>
+    <div id="pomoTime" style="font-size:48px;text-align:center;margin:16px 0;font-weight:bold">25:00</div>
+    <div class="addbar"><button class="btn" onclick="Skills.pomoStart()">▶ 开始</button><button class="btn ghost" onclick="Skills.pomoPause()">⏸ 暂停</button><button class="btn ghost" onclick="Skills.pomoReset()">↺ 重置</button></div>
+    <div class="sub" style="margin-top:8px">专注25分钟，结束提示你休息。完成后请在对话里说「专注25分钟」记一次学习打卡。</div>`);
+    Skills._pomoLeft=25*60; },
+  pomoStart(){ if(Skills._pomoTimer)return; Skills._pomoTimer=setInterval(()=>{ Skills._pomoLeft--; const m=Math.floor(Skills._pomoLeft/60),s=Skills._pomoLeft%60; const el=document.getElementById('pomoTime'); if(el)el.textContent=m+':'+(s<10?'0':'')+s; if(Skills._pomoLeft<=0){ clearInterval(Skills._pomoTimer); Skills._pomoTimer=null; toast('专注完成！去对话说「专注25分钟」记打卡'); closeModal(); } },1000); },
+  pomoPause(){ if(Skills._pomoTimer){clearInterval(Skills._pomoTimer);Skills._pomoTimer=null;} },
+  pomoReset(){ if(Skills._pomoTimer){clearInterval(Skills._pomoTimer);Skills._pomoTimer=null;} Skills._pomoLeft=25*60; const el=document.getElementById('pomoTime'); if(el)el.textContent='25:00'; },
+  calc(){ openModal(`<h2>🧮 计算器 <button class="close" onclick="closeModal()">✕</button></h2>
+    <input id="calcIn" style="width:100%;font-size:22px;text-align:right;margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:10px" value="0"/>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+    ${['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(k=>`<button class="btn ${k==='='?'':'ghost'}" onclick="Skills.calcKey('${k}')">${k}</button>`).join('')}
+    </div><div class="addbar" style="margin-top:8px"><button class="btn ghost" onclick="Skills.calcKey('C')">清空</button></div>`); },
+  calcKey(k){ const i=document.getElementById('calcIn'); if(k==='C'){i.value='0';return;} if(k==='='){ try{i.value=String(eval(i.value));}catch(e){i.value='错误';} return;} if(i.value==='0'&&k!=='.')i.value=k; else i.value+=k; },
+  open(type){
+    if(type==='data') return DataModal.open();
+    if(type==='ppt') return this.ppt();
+    if(type==='image') return this.image();
+    if(type==='doc') return this.doc();
+    if(type==='mind') return this.mind();
+    if(type==='tts') return this.tts();
+    if(type==='translate') return this.translate();
+    if(type==='resume') return this.resume();
+    if(type==='pomodoro') return this.pomodoro();
+    if(type==='calc') return this.calc();
+    return this.data();
+  },
+};
+window.Skills=Skills;
+
+/* ============ 启动 ============ */
+// 兼容旧版(v1)数据
+try{ if(!localStorage.getItem(STORE_KEY) && localStorage.getItem('hupo_agent_v1')){ localStorage.setItem(STORE_KEY, localStorage.getItem('hupo_agent_v1')); } }catch(e){}
+state = load();
+function tick(){
+  const d=new Date(); const wd=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  const clk=document.getElementById('clock'); if(clk) clk.textContent=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${wd} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const cd=document.getElementById('countdown'); if(cd){ const due=nearestDue(); if(due){ const diff=due.due-d.getTime(); cd.innerHTML = diff>0? ('⏰ '+escapeHtml(due.text)+' 还有 '+fmtDur(diff)) : ('⏰ '+escapeHtml(due.text)+' 已到期'); } else cd.textContent='⏰ 暂无倒计时提醒'; }
+}
+setInterval(tick,1000); tick();
+setInterval(syncPull, 15000);
+// 每日10点消费分类提醒（本地，不依赖外部连接器）
+(function(){
+  if(!('Notification' in window)) return;
+  setInterval(()=>{
+    const n=new Date();
+    if(state.billRemind && n.getHours()===10 && n.getMinutes()===0){
+      const key='hupo_billremind_'+n.toDateString();
+      if(!localStorage.getItem(key)){
+        localStorage.setItem(key,'1');
+        const body='打开琥珀→财务，导入/分类今天的支出（个人 / 公司垫付 / 其他）';
+        if(Notification.permission==='granted'){ try{ new Notification('琥珀：该分类今日消费啦',{body}); }catch(e){} }
+        toast('⏰ 该分类今天的消费啦（个人/公司垫付/其他）');
+      }
+    }
+  }, 60000);
+})();
+normalize(); save(); render();
+syncPull();
+</script>
+</body>
+</html>
