@@ -1180,7 +1180,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
             document.body.classList.toggle('side-open-mobile', !open);
           } else {
             const collapsed=localStorage.getItem('hupo_side_collapsed')==='1';
-            localStorage.setItem('hupo_side_collapsed', collapsed?'':'1');
+            // localStorage 语义 = '1' = 收起 / '' = 展开；切到 !collapsed 状态
+            localStorage.setItem('hupo_side_collapsed', !collapsed?'1':'');
             if(s) s.classList.toggle('collapsed', !collapsed);
             document.body.classList.toggle('side-collapsed-desktop', !collapsed);
             if(mask) mask.classList.remove('show');
