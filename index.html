@@ -733,6 +733,7 @@ function todayDigestHtml(){
 
 function viewOverview(){
   const w=state.weekly, b=state.budget;
+  const used=b.personal+b.company+b.other;
   const undone=state.tasksAll.filter(x=>!x.done).length;
   const due=nearestDue();
   return `
