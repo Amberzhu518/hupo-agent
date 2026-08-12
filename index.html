@@ -233,7 +233,37 @@
   <!-- 主区 -->
   <section class="main">
     <div class="topbar">
-      <button class="menu-btn" id="menuBtn" onclick="try{App.toggleSide()}catch(e){try{var s=document.getElementById('side');var c=localStorage.getItem('hupo_side_collapsed')==='1';var n=!c;localStorage.setItem('hupo_side_collapsed',n?'1':'');if(s)s.classList.toggle('collapsed',n);document.body.classList.toggle('side-collapsed-desktop',n);}catch(_){}};return false" title="显示/收起侧栏">☰</button>
+      <button class="menu-btn" id="menuBtn" onclick="
+        (function(){
+          try{
+            var s=document.getElementById('side');
+            var mask=document.getElementById('sideMask');
+            var isMob=window.matchMedia&amp;&amp;window.matchMedia('(max-width:640px)').matches;
+            if(isMob){
+              var open=(sessionStorage.getItem('hupo_side_open')==='1');
+              var no=!open;
+              sessionStorage.setItem('hupo_side_open',no?'1':'0');
+              if(s)s.classList.toggle('open',no);
+              if(mask)mask.classList.toggle('show',no);
+              document.body.classList.toggle('side-open-mobile',no);
+              if(typeof toast==='function')toast(no?'已展开侧栏':'已收起侧栏');
+            }else{
+              var cur=(localStorage.getItem('hupo_side_collapsed')==='1');
+              var n=!cur;
+              localStorage.setItem('hupo_side_collapsed',n?'1':'');
+              if(s)s.classList.toggle('collapsed',n);
+              document.body.classList.toggle('side-collapsed-desktop',n);
+              if(mask)mask.classList.remove('show');
+              if(typeof toast==='function')toast(n?'已收起侧栏':'已展开侧栏');
+            }
+            if(typeof console!=='undefined')console.log('[menu-btn] toggle -&gt;',n||no);
+          }catch(err){
+            if(typeof console!=='undefined')console.error('[menu-btn] fatal:',err);
+            alert('菜单按钮执行失败：'+(err&amp;&amp;err.message?err.message:err)+'\\n请截图发给我');
+          }
+          return false;
+        })();
+      " title="显示/收起侧栏">☰</button>
       <div class="title" id="viewTitle">工作台概览</div>
       <div class="stat clock" id="clock">--</div>
       <div class="stat count" id="countdown">⏰ 暂无倒计时提醒</div>
