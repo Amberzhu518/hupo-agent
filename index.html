@@ -24,13 +24,38 @@
     min-height:100vh;padding:14px;
   }
   .app{display:flex;gap:14px;max-width:1180px;margin:0 auto;height:calc(100vh - 28px)}
-  /* 侧边栏 */
+  /* 侧边栏 —— 可收起（桌面）/ 抽屉（手机） */
   .side{width:188px;flex:0 0 188px;background:rgba(255,255,255,.78);backdrop-filter:blur(8px);
-    border-radius:20px;box-shadow:var(--shadow);padding:16px 12px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+    border-radius:20px;box-shadow:var(--shadow);padding:16px 12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;
+    transition:width .25s ease,flex-basis .25s ease,padding .25s ease,opacity .25s ease}
+  .side.collapsed{width:0;flex:0 0 0;padding:0;opacity:0;pointer-events:none;margin-right:-14px}
+  .side .nav-text{display:inline-block;white-space:nowrap;transition:opacity .15s ease}
+  .side.collapsed .logo,.side.collapsed .side-foot,.side.collapsed .nav-text{display:none}
+  .side.collapsed .nav-btn{padding:10px 0;justify-content:center}
+  .side.collapsed .nav-btn .ic{margin:0;font-size:18px}
   .logo{display:flex;align-items:center;gap:10px;padding:4px 8px 14px}
   .logo .ava{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--pink));display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 38px;overflow:hidden;cursor:pointer}
   .logo .ava img{width:100%;height:100%;object-fit:cover;display:block}
-    display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
+  .logo b{font-size:15px}
+  .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
+  /* 菜单按钮（顶栏左上） */
+  .menu-btn{border:none;background:var(--blue-soft);color:var(--blue);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex:0 0 36px}
+  .menu-btn:hover{background:#dcebff}
+  /* 侧栏关闭按钮（手机抽屉内） */
+  .side-close{border:none;background:#f0f2f8;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text-soft);align-self:flex-end;margin-bottom:4px}
+  .side-close:hover{background:#e6e9f3}
+  /* 手机抽屉遮罩 */
+  .side-mask{position:fixed;inset:0;background:rgba(40,46,70,.45);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s ease}
+  .side-mask.show{opacity:1;pointer-events:auto}
+  /* 手机版：侧栏变成抽屉（<640px） */
+  @media(max-width:640px){
+    .app{padding:0 8px}
+    .side{position:fixed;top:14px;left:14px;bottom:14px;width:240px;flex:0 0 240px;z-index:100;box-shadow:0 12px 36px rgba(40,46,70,.25);
+      transform:translateX(-260px);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .2s ease;height:auto}
+    .side.open{transform:translateX(0);opacity:1;pointer-events:auto}
+    .side.collapsed{transform:translateX(-260px);opacity:0;pointer-events:none}
+  }
+  @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
   .logo b{font-size:15px}
   .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
   .nav-btn{border:none;background:transparent;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;
@@ -114,6 +139,22 @@
   .ach.on .medal{filter:none;opacity:1}
   .ach.on{border-color:var(--gold);background:#fffaf0}
   .ach small{font-size:11px;color:var(--text-soft)}
+  /* 博主卡片：标题第一排 + 简介 + 外联紧贴下方 */
+  .broker{padding:10px 0;border-bottom:1px dashed var(--line)}
+  .broker:last-of-type{border-bottom:0}
+  .broker-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+  .broker-head .ic{font-size:18px}
+  .broker-head b{font-size:15px}
+  .broker-tag{font-size:11px;color:var(--text-soft);background:var(--blue-soft);color:var(--blue);padding:2px 8px;border-radius:8px;font-weight:500}
+  .broker-sub{font-size:12px;color:var(--text-soft);margin:4px 0 8px 26px}
+  /* 今日速览卡片 */
+  .today-digest h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .today-digest h3 .sub{flex:1;font-weight:400;margin-left:2px}
+  .digest-item{padding:10px 0;border-top:1px dashed var(--line)}
+  .digest-item:first-child{border-top:0;padding-top:4px}
+  .digest-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .digest-cat{font-size:11px;padding:2px 8px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;font-weight:500}
+  .digest-h b{font-size:14px}
   .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#3a3f55;color:#fff;padding:10px 18px;border-radius:14px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:99}
   .toast.show{opacity:1}
   /* 技能卡片 */
@@ -138,34 +179,38 @@
   .preview{background:#fafbff;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:260px;overflow:auto;margin-top:10px;font-size:12px}
   .modal video{width:100%;border-radius:12px;background:#000}
   .canvasprev{width:100%;border-radius:12px;border:1px solid var(--line);margin-top:10px;background:#fff}
-  @media(max-width:760px){.app{flex-direction:column;height:auto}.side{width:100%;flex-direction:row;flex-wrap:wrap}.side-foot{display:none}.g2,.g3,.g4{grid-template-columns:1fr}}
+  @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
+  <!-- 手机抽屉遮罩 -->
+  <div class="side-mask" id="sideMask" onclick="App.toggleSide(false)"></div>
   <!-- 侧边栏 -->
-  <aside class="side">
+  <aside class="side" id="side">
+    <button class="side-close" id="sideClose" onclick="App.toggleSide(false)" title="收起侧栏">✕</button>
     <div class="logo">
       <div class="ava" onclick="changeAvatar()" title="点击更换头像"><img src="avatar.png" alt="头像" onerror="this.parentNode.textContent='🟡'"/></div>
       <div><b>琥珀的agent</b><small>个人成长管家</small></div>
     </div>
-    <button class="nav-btn active" data-v="overview"><span class="ic">🏠</span>概览</button>
-    <button class="nav-btn" data-v="chat"><span class="ic">💬</span>对话</button>
-    <button class="nav-btn" data-v="goals"><span class="ic">🎯</span>目标</button>
-    <button class="nav-btn" data-v="tasks"><span class="ic">📝</span>待办</button>
-    <button class="nav-btn" data-v="research"><span class="ic">📚</span>科研/学习</button>
-    <button class="nav-btn" data-v="finance"><span class="ic">💰</span>财务</button>
-    <button class="nav-btn" data-v="exercise"><span class="ic">🏃</span>运动健康</button>
-    <button class="nav-btn" data-v="skills"><span class="ic">🛠️</span>技能中心</button>
-    <button class="nav-btn" data-v="photos"><span class="ic">🖼️</span>相册</button>
-    <button class="nav-btn" data-v="review"><span class="ic">🪞</span>复盘</button>
-    <button class="nav-btn" data-v="ach"><span class="ic">🏆</span>成就墙</button>
+    <button class="nav-btn active" data-v="overview"><span class="ic">🏠</span><span class="nav-text">概览</span></button>
+    <button class="nav-btn" data-v="chat"><span class="ic">💬</span><span class="nav-text">对话</span></button>
+    <button class="nav-btn" data-v="goals"><span class="ic">🎯</span><span class="nav-text">目标</span></button>
+    <button class="nav-btn" data-v="tasks"><span class="ic">📝</span><span class="nav-text">待办</span></button>
+    <button class="nav-btn" data-v="research"><span class="ic">📚</span><span class="nav-text">科研/学习</span></button>
+    <button class="nav-btn" data-v="finance"><span class="ic">💰</span><span class="nav-text">财务</span></button>
+    <button class="nav-btn" data-v="exercise"><span class="ic">🏃</span><span class="nav-text">运动健康</span></button>
+    <button class="nav-btn" data-v="skills"><span class="ic">🛠️</span><span class="nav-text">技能中心</span></button>
+    <button class="nav-btn" data-v="photos"><span class="ic">🖼️</span><span class="nav-text">相册</span></button>
+    <button class="nav-btn" data-v="review"><span class="ic">🪞</span><span class="nav-text">复盘</span></button>
+    <button class="nav-btn" data-v="ach"><span class="ic">🏆</span><span class="nav-text">成就墙</span></button>
     <div class="side-foot">数据优先存云端同步<br>点右上「数据」可备份</div>
   </aside>
 
   <!-- 主区 -->
   <section class="main">
     <div class="topbar">
+      <button class="menu-btn" id="menuBtn" onclick="App.toggleSide()" title="显示/收起侧栏">☰</button>
       <div class="title" id="viewTitle">工作台概览</div>
       <div class="stat clock" id="clock">--</div>
       <div class="stat count" id="countdown">⏰ 暂无倒计时提醒</div>
@@ -628,6 +673,25 @@ function summaryText(){
 let curView='overview';
 const TITLES={overview:'工作台概览',chat:'与琥珀对话',goals:'目标进度',tasks:'待办任务',research:'科研 / 学习',finance:'财务管理',exercise:'运动健康',skills:'技能中心',photos:'相册',review:'复盘系统',ach:'成就墙'};
 
+/* 侧栏展开/收起：手机用抽屉，桌面用收起/展开。状态持久化（手机模式下不记忆）。 */
+function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
+function applySide(){
+  const side=document.getElementById('side'); if(!side) return;
+  const mask=document.getElementById('sideMask');
+  const mobile=isMobile();
+  if(mobile){
+    const open=(sessionStorage.getItem('hupo_side_open')==='1');
+    side.classList.toggle('open', open);
+    side.classList.remove('collapsed');
+    if(mask) mask.classList.toggle('show', open);
+  }else{
+    const collapsed=(localStorage.getItem('hupo_side_collapsed')==='1');
+    side.classList.toggle('collapsed', collapsed);
+    side.classList.remove('open');
+    if(mask) mask.classList.remove('show');
+  }
+}
+
 function render(){
   normalize();
   document.getElementById('tLv').textContent=state.level;
@@ -652,12 +716,29 @@ function render(){
   bindView();
 }
 
+function todayDigestHtml(){
+  /* 显示「今天」的新闻联播 / AI日报 / 财务日报 笔记（工作buddy 推送的内容直接同步到这里） */
+  const DIGEST_CATS=['新闻联播','AI日报','财务日报'];
+  const t=todayStr();
+  const notes=(state.notes||[]).filter(n=>n && n.date===t && DIGEST_CATS.indexOf(n.cat||'')>=0);
+  if(!notes.length){
+    return `<div class="empty" style="padding:18px 0">今天还没有速览内容。<br><span class="sub">① 在「科研/学习」里说「<b>笔记 标题 | 要点1；要点2 | 链接</b>」<br>② 或在工作buddy触发推送后等 15 秒自动同步到本机</span></div>`;
+  }
+  const ICONS={'新闻联播':'📺','AI日报':'🤖','财务日报':'💹'};
+  return notes.map(n=>{
+    const pts=renderPoints(n.points);
+    return `<div class="digest-item"><div class="digest-h"><span class="digest-cat">${ICONS[n.cat]||'📌'} ${escapeHtml(n.cat)}</span><b>${escapeHtml(n.title)}</b>${n.link?`<a class="btn sm ghost" href="${escapeHtml(n.link)}" target="_blank" rel="noopener">🔗 原文</a>`:''}</div><ol class="note-pts" style="margin-top:6px">${pts}</ol></div>`;
+  }).join('');
+}
+
 function viewOverview(){
   const w=state.weekly, b=state.budget;
-  const used=b.personal+b.company+b.other;
   const undone=state.tasksAll.filter(x=>!x.done).length;
   const due=nearestDue();
   return `
+  <div class="card today-digest"><h3>📰 今日速览 <span class="sub">${todayStr()} · 工作buddy推送的内容也直接显示在这里</span> <button class="btn sm ghost" onclick="curView='research';render()">查看全部 →</button></h3>
+    ${todayDigestHtml()}
+  </div>
   <div class="grid g4">
     <div class="card"><h3>🟡 等级</h3><div class="big">LV${state.level}</div><div class="sub">XP ${state.xp}/${state.xpToNext}</div></div>
     <div class="card"><h3>🪙 木币</h3><div class="big">${state.mucoins}</div><div class="sub">完成行动可赚取</div></div>
@@ -802,19 +883,21 @@ function viewResearch(){
     <div class="card" style="margin-top:14px"><h3>🔬 科研任务（${state.research.length}）</h3>${res||'<div class="empty">暂无，说「科研任务 XXX」添加</div>'}</div>
     <div class="card" style="margin-top:14px"><h3>💡 灵感想法箱（${state.ideas.length}）</h3>${idea||'<div class="empty">暂无灵感</div>'}</div>
     <div class="card" style="margin-top:14px"><h3>⭐ 关注博主 / 订阅源（联网跳转）</h3>
-      <div class="item"><div class="main">🎓 <b>齐昊</b> · 前普华永道审计师<div class="sub">财务思维 / 内控 / 业财融合</div></div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-        <a class="btn sm ghost" href="https://www.douyin.com/user/MS4wLjABAAAA5EVtpZzmzCvglHK4L2lfVZD7AvYXm8184tNGG-4hULTiTdTWNLySI3RfTvC2kD7C" target="_blank" rel="noopener">📱 抖音</a>
-        <a class="btn sm ghost" href="https://www.bilibili.com/read/cv41492074" target="_blank" rel="noopener">📺 B站</a>
-        <a class="btn sm ghost" href="https://www.ximalaya.com/search/%E9%BD%90%E6%98%8A" target="_blank" rel="noopener">🎧 喜马拉雅</a>
-        <a class="btn sm ghost" href="https://podcasts.apple.com/cn/podcast/008-%E8%AE%BA%E8%AF%AD-%E6%80%9D%E6%83%B3%E5%93%81%E8%AF%BB-%E6%B2%BB%E5%9B%BD%E4%B9%8B%E9%81%93/id1829910021" target="_blank" rel="noopener">🍎 Apple播客</a>
+      <div class="broker"><div class="broker-head"><span class="ic">🎓</span><b>齐昊</b><span class="broker-tag">前普华永道审计师</span></div>
+        <div class="broker-sub">财务思维 / 内控 / 业财融合</div>
+        <div class="chips" style="padding:0">
+        <a class="chip" href="https://www.douyin.com/user/MS4wLjABAAAA5EVtpZzmzCvglHK4L2lfVZD7AvYXm8184tNGG-4hULTiTdTWNLySI3RfTvC2kD7C" target="_blank" rel="noopener">📱 抖音</a>
+        <a class="chip" href="https://www.bilibili.com/read/cv41492074" target="_blank" rel="noopener">📺 B站</a>
+        <a class="chip" href="https://www.ximalaya.com/search/%E9%BD%90%E6%98%8A" target="_blank" rel="noopener">🎧 喜马拉雅</a>
+        <a class="chip" href="https://podcasts.apple.com/cn/podcast/008-%E8%AE%BA%E8%AF%AD-%E6%80%9D%E6%83%B3%E5%93%81%E8%AF%BB-%E6%B2%BB%E5%9B%BD%E4%B9%8B%E9%81%93/id1829910021" target="_blank" rel="noopener">🍎 Apple播客</a>
         </div></div>
-      <div class="item" style="margin-top:8px"><div class="main">🗣 <b>夏鹏</b> · 友邻优课创始人<div class="sub">职场成长 / 英语晨读</div></div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-        <a class="btn sm ghost" href="https://www.douyin.com/user/MS4wLjABAAAANGA5A5rGMRer1zDmp5sv0NBTkcPL5ZeHDjlRPF24C9rHLCf86hjJr_XWoyZ63l5Q" target="_blank" rel="noopener">📱 抖音</a>
-        <a class="btn sm ghost" href="https://space.bilibili.com/3546800797518640" target="_blank" rel="noopener">📺 B站</a>
-        <a class="btn sm ghost" href="https://www.ximalaya.com/search/%E5%A4%8F%E8%AF%B4%E8%8B%B1%E6%96%87" target="_blank" rel="noopener">🎧 喜马拉雅</a>
-        <a class="btn sm ghost" href="https://www.xiaoyuzhoufm.com/episode/6397e4f53a2b7eba5ceb4572" target="_blank" rel="noopener">🎙 小宇宙</a>
+      <div class="broker" style="margin-top:10px"><div class="broker-head"><span class="ic">🗣</span><b>夏鹏</b><span class="broker-tag">友邻优课创始人</span></div>
+        <div class="broker-sub">职场成长 / 英语晨读</div>
+        <div class="chips" style="padding:0">
+        <a class="chip" href="https://www.douyin.com/user/MS4wLjABAAAANGA5A5rGMRer1zDmp5sv0NBTkcPL5ZeHDjlRPF24C9rHLCf86hjJr_XWoyZ63l5Q" target="_blank" rel="noopener">📱 抖音</a>
+        <a class="chip" href="https://space.bilibili.com/3546800797518640" target="_blank" rel="noopener">📺 B站</a>
+        <a class="chip" href="https://www.ximalaya.com/search/%E5%A4%8F%E8%AF%B4%E8%8B%B1%E6%96%87" target="_blank" rel="noopener">🎧 喜马拉雅</a>
+        <a class="chip" href="https://www.xiaoyuzhoufm.com/episode/6397e4f53a2b7eba5ceb4572" target="_blank" rel="noopener">🎙 小宇宙</a>
         </div></div>
       <div class="sub" style="margin-top:8px">点链接在手机/电脑打开；听完回来跟我说「文献 齐昊《XX》」或「笔记 标题 | 要点1；要点2 | 链接」即可收录要点笔记。</div>
     </div>
@@ -949,6 +1032,8 @@ function syncFavicon(href){
   });
 }
 window.addEventListener('DOMContentLoaded', loadAvatar);
+window.addEventListener('DOMContentLoaded', applySide);
+window.addEventListener('resize', applySide);
 
 /* ============ 事件绑定 ============ */
 function bindView(){ document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>{curView=b.dataset.v;render();}); }
@@ -974,6 +1059,20 @@ const App = {
   delPhoto(i){state.photos.splice(i,1);save();render();},
   syncNow(){ setSyncStatus('syncing'); syncPush(); setTimeout(syncPull, 600); toast('已触发同步'); },
   openData(){ DataModal.open(); },
+  /* 侧栏显示/收起；手机传入 force=true/false 时强制开/关，不传则翻转 */
+  toggleSide(force){
+    if(isMobile()){
+      const cur=(sessionStorage.getItem('hupo_side_open')==='1');
+      const next=(force===true)?true:(force===false?false:!cur);
+      sessionStorage.setItem('hupo_side_open', next?'1':'0');
+    }else{
+      const cur=(localStorage.getItem('hupo_side_collapsed')==='1');
+      const next=(force===true)?true:(force===false?false:!cur);
+      // 桌面：true = 展开（即不收起）；false = 收起
+      localStorage.setItem('hupo_side_collapsed', next?'':'1');
+    }
+    applySide();
+  },
   openNote(){
     openModal(`<h2>📒 添加内容笔记 <button class="close" onclick="closeModal()">✕</button></h2>
       <label>标题（如：夏鹏《如何写周报》/ 8.11 新闻联播）</label>
