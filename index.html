@@ -297,6 +297,7 @@ function setSyncStatus(s, txt){
   if(t){t.textContent = txt || (s==='synced'?'已同步':s==='offline'?'离线':'同步中');}
 }
 function syncPush(){
+  if(syncProvider==='github'){ githubPush(); return; }
   if(syncProvider==='gitee'){ giteePush(); return; }
   if(!navigator.onLine) { setSyncStatus('offline'); return; }
   setSyncStatus('syncing');
@@ -307,6 +308,7 @@ function syncPush(){
     .catch(()=>setSyncStatus('offline'));
 }
 function syncPull(){
+  if(syncProvider==='github'){ githubPull(); return; }
   if(syncProvider==='gitee'){ giteePull(); return; }
   fetch('/sync',{headers:{'x-sync-key':syncKey}})
     .then(r=>r.json())
@@ -332,7 +334,7 @@ function isCloudHost(){
   const h=location.hostname;
   return !(h==='localhost'||h==='127.0.0.1'||h==='[::1]'||h.startsWith('192.168.')||h.startsWith('10.')||/^172\.(1[6-9]|2\d|3[01])\./.test(h));
 }
-let syncProvider = (function(){ const s=localStorage.getItem('hupo_sync_provider'); return (s==='gitee'||s==='local')?s:(isCloudHost()?'gitee':'local'); })();
+let syncProvider = (function(){ const s=localStorage.getItem('hupo_sync_provider'); return (s==='gitee'||s==='local'||s==='github')?s:(isCloudHost()?'github':'local'); })();
 let gtToken = localStorage.getItem('hupo_gt_token') || '';
 let gtOwner = localStorage.getItem('hupo_gt_owner') || '';
 let gtPageRepo = 'hupo-agent';
@@ -344,13 +346,23 @@ function gtHeaders(extra){ const h={'Authorization':'token '+gtToken,'Content-Ty
 function gtUrl(p){ return GT_API+p; }
 function b64u(str){ return btoa(unescape(encodeURIComponent(str))); }
 function unb64u(b64){ return decodeURIComponent(escape(atob((b64||'').replace(/\s/g,'')))); }
+/* ============ 云端中转同步（GitHub，电脑关机也能用） ============ */
+let ghToken = localStorage.getItem('hupo_gh_token') || '';
+let ghOwner = localStorage.getItem('hupo_gh_owner') || '';
+let ghDataRepo = 'hupo-agent-data';
+let ghSyncPath = 'sync/hupo-agent-sync.json';
+let ghFileSha = localStorage.getItem('hupo_gh_sha') || '';
+const GH_API='https://api.github.com';
+function ghHeaders(extra){ const h={'Authorization':'token '+ghToken,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'hupo'}; if(extra) Object.assign(h,extra); return h; }
 function setProvider(p){
   syncProvider=p; localStorage.setItem('hupo_sync_provider',p);
   const gb=document.getElementById('giteeBox'); if(gb) gb.style.display = p==='gitee'?'':'none';
+  const hb=document.getElementById('githubBox'); if(hb) hb.style.display = p==='github'?'':'none';
   const lb=document.getElementById('localSyncBox'); if(lb) lb.style.display = p==='local'?'':'none';
   if(p==='gitee'){ if(gtToken&&gtOwner){ giteePull(); } else { toast('请填写 Gitee 令牌'); } }
+  else if(p==='github'){ if(ghToken&&ghOwner){ githubPull(); } else { toast('请填写 GitHub 令牌'); } }
   else { syncPull(); }
-  toast(p==='gitee'?'已切换为云端中转(Gitee)':'已切换为连本机');
+  toast(p==='gitee'?'已切换为云端中转(Gitee)':p==='github'?'已切换为云端中转(GitHub)':'已切换为连本机');
 }
 async function resolveGtFile(){
   try{
@@ -379,6 +391,39 @@ async function giteePull(){
     const r=await fetch(gtUrl('/repos/'+gtOwner+'/'+gtDataRepo+'/contents/'+gtSyncPath),{headers:gtHeaders()});
     if(!r.ok){ setSyncStatus('offline','未找到同步空间（请先在任一设备推送一次）'); return; }
     const j=await r.json(); gtFileSha=j.sha; localStorage.setItem('hupo_gt_sha',gtFileSha);
+    const inc=JSON.parse(unb64u(j.content));
+    if(inc && inc.data && inc.ts && inc.ts>lastSyncTs){ mergeRemote(inc.data, inc.ts); }
+    setSyncStatus('synced');
+  }catch(e){ setSyncStatus('offline','网络异常'); }
+}
+/* ============ GitHub 中转实现 ============ */
+async function resolveGhFile(){
+  try{
+    const r=await fetch(GH_API+'/repos/'+ghOwner+'/'+ghDataRepo+'/contents/'+ghSyncPath,{headers:ghHeaders()});
+    if(r.ok){ const j=await r.json(); return {sha:j.sha}; }
+  }catch(e){}
+  return {sha:null};
+}
+async function githubPush(){
+  if(!ghToken||!ghOwner){ setSyncStatus('offline','需 GitHub 令牌'); return; }
+  setSyncStatus('syncing');
+  const body=JSON.stringify({ts:Date.now(), data:state, device:(navigator.userAgent||'').slice(0,40)});
+  try{
+    let sha=ghFileSha; if(!sha){ const f=await resolveGhFile(); sha=f.sha; }
+    const payload={message:'sync '+new Date().toISOString(), content:b64u(body), branch:'main'};
+    if(sha) payload.sha=sha;
+    const r=await fetch(GH_API+'/repos/'+ghOwner+'/'+ghDataRepo+'/contents/'+ghSyncPath,{method:'PUT',headers:ghHeaders(),body:JSON.stringify(payload)});
+    if(!r.ok){ setSyncStatus('offline','GitHub 写入失败'); return; }
+    const j=await r.json(); ghFileSha=j.content.sha; localStorage.setItem('hupo_gh_sha',ghFileSha);
+    lastSyncTs=Date.now(); localStorage.setItem('hupo_sync_ts',lastSyncTs); setSyncStatus('synced');
+  }catch(e){ setSyncStatus('offline','网络异常'); }
+}
+async function githubPull(){
+  if(!ghToken||!ghOwner){ setSyncStatus('offline','需 GitHub 令牌'); return; }
+  try{
+    const r=await fetch(GH_API+'/repos/'+ghOwner+'/'+ghDataRepo+'/contents/'+ghSyncPath,{headers:ghHeaders()});
+    if(!r.ok){ setSyncStatus('offline','未找到同步空间（请先推送一次）'); return; }
+    const j=await r.json(); ghFileSha=j.sha; localStorage.setItem('hupo_gh_sha',ghFileSha);
     const inc=JSON.parse(unb64u(j.content));
     if(inc && inc.data && inc.ts && inc.ts>lastSyncTs){ mergeRemote(inc.data, inc.ts); }
     setSyncStatus('synced');
@@ -1051,6 +1096,7 @@ const DataModal={
       <br><br><b>同步方式：</b><br>
       <label style="margin-right:14px"><input type="radio" name="syncmode" value="local" ${syncProvider==='local'?'checked':''} onchange="setProvider('local')"> 连本机（电脑常开/局域网）</label>
       <label><input type="radio" name="syncmode" value="gitee" ${syncProvider==='gitee'?'checked':''} onchange="setProvider('gitee')"> 云端中转 Gitee（电脑关机也能用）</label>
+      <label><input type="radio" name="syncmode" value="github" ${syncProvider==='github'?'checked':''} onchange="setProvider('github')"> 云端中转 GitHub（电脑关机也能用）</label>
       <div id="giteeBox" style="${syncProvider==='gitee'?'':'display:none'}">
         <b>① 去 Gitee 创建私人令牌（你本人登录密码，我不接触）：</b><br>
         <button class="btn" onclick="window.open('https://gitee.com/profile/personal_access_tokens/new','_blank')">🚀 去 Gitee 一键创建令牌</button>
@@ -1071,6 +1117,23 @@ const DataModal={
         <br><b>③ 部署到 Gitee Pages（生成永久常驻链接，电脑关机也能用）：</b><br>
         <button class="btn" onclick="DataModal.deployPages()" ${gtToken?'':'disabled'}>🚀 一键部署（需有效令牌）</button>
         <span id="deployInfo" class="sub"></span>
+      </div>
+      <div id="githubBox" style="${syncProvider==='github'?'':'display:none'}">
+        <b>① 去 GitHub 创建私人令牌（你本人登录密码，我不接触）：</b><br>
+        <button class="btn" onclick="window.open('https://github.com/settings/tokens/new?description=琥珀管家同步&scopes=repo','_blank')">🚀 去 GitHub 一键创建令牌</button>
+        <div class="sub" style="line-height:1.85">
+          打开后按提示登录（输入 GitHub 密码是你自己操作）：<br>
+          1) 右上角头像 → <b>Settings（设置）</b><br>
+          2) 左侧 → <b>Developer settings → Personal access tokens → Tokens (classic)</b><br>
+          3) → <b>Generate new token (classic)</b><br>
+          4) 权限<b>勾选 repo（全仓库读写，含数据同步所需）</b>；Note 随便填如「琥珀管家」<br>
+          5) 点 <b>Generate token</b>，复制整串令牌（ghp_ 开头，只显示一次）<br>
+        </div>
+        <br><b>② 粘贴令牌并验证：</b><br>
+        <input id="ghTokenIn" type="password" value="${ghToken}" placeholder="粘贴 GitHub 私人令牌" style="width:100%;margin:4px 0"/>
+        <button class="btn" onclick="DataModal.verifyGhToken()">验证并保存</button>
+        <span id="ghTokenInfo" class="sub"></span>
+        <div class="sub">令牌仅存本机浏览器，只用于读写你的 GitHub <b>私有仓库 hupo-agent-data</b>。手机和电脑填<b>同一个令牌</b>即共享同一份数据（电脑关机也不影响）。数据存在<b>私有仓库</b>，不公开。</div>
       </div>
       <div class="sub" id="localSyncBox" style="${syncProvider==='local'?'':'display:none'}">本地模式：手机和电脑用<b>同一个网址</b>打开、并填<b>相同密钥</b>，数据自动实时同步（依赖电脑常开）。</div>
       <br><br><b>同步空间（本地模式）：</b><br>
@@ -1093,6 +1156,22 @@ const DataModal={
       gtFileSha=''; localStorage.removeItem('hupo_gt_sha');
       if(info) info.innerHTML='✅ 登录身份：<b>'+escapeHtml(me.login||'')+'</b> ｜ 令牌可用（projects 权限，可同步也可部署）';
       giteePush(); setTimeout(giteePull,900);
+      toast('令牌已保存，正在同步');
+    }catch(e){ if(info) info.textContent='❌ 网络异常：'+e.message; }
+  },
+  async verifyGhToken(){
+    const t=document.getElementById('ghTokenIn').value.trim();
+    if(!t){toast('请先粘贴令牌');return;}
+    const info=document.getElementById('ghTokenInfo'); if(info) info.textContent='验证中…';
+    try{
+      const r=await fetch(GH_API+'/user',{headers:ghHeaders()});
+      if(!r.ok){ if(info) info.textContent='❌ 令牌无效（HTTP '+r.status+'）'; return; }
+      const me=await r.json();
+      ghToken=t; localStorage.setItem('hupo_gh_token',t);
+      ghOwner=me.login; localStorage.setItem('hupo_gh_owner',ghOwner);
+      ghFileSha=''; localStorage.removeItem('hupo_gh_sha');
+      if(info) info.innerHTML='✅ 登录身份：<b>'+escapeHtml(me.login||'')+'</b> ｜ 令牌可用（repo 权限，可同步）';
+      githubPush(); setTimeout(githubPull,900);
       toast('令牌已保存，正在同步');
     }catch(e){ if(info) info.textContent='❌ 网络异常：'+e.message; }
   },
