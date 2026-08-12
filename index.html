@@ -383,7 +383,7 @@ async function giteePush(){
     if(!r.ok){ setSyncStatus('offline','Gitee 写入失败'); return; }
     const j=await r.json(); gtFileSha=j.content.sha; localStorage.setItem('hupo_gt_sha',gtFileSha);
     lastSyncTs=Date.now(); localStorage.setItem('hupo_sync_ts',lastSyncTs); setSyncStatus('synced');
-  }catch(e){ setSyncStatus('offline','网络异常'); }
+  }catch(e){ setSyncStatus('offline','Gitee 网络异常·建议改 GitHub 同步'); }
 }
 async function giteePull(){
   if(!gtToken||!gtOwner){ setSyncStatus('offline','需 Gitee 令牌'); return; }
@@ -394,7 +394,7 @@ async function giteePull(){
     const inc=JSON.parse(unb64u(j.content));
     if(inc && inc.data && inc.ts && inc.ts>lastSyncTs){ mergeRemote(inc.data, inc.ts); }
     setSyncStatus('synced');
-  }catch(e){ setSyncStatus('offline','网络异常'); }
+  }catch(e){ setSyncStatus('offline','Gitee 网络异常·建议改 GitHub 同步'); }
 }
 /* ============ GitHub 中转实现 ============ */
 async function resolveGhFile(){
