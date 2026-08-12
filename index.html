@@ -1164,7 +1164,7 @@ const DataModal={
     if(!t){toast('请先粘贴令牌');return;}
     const info=document.getElementById('ghTokenInfo'); if(info) info.textContent='验证中…';
     try{
-      const r=await fetch(GH_API+'/user',{headers:ghHeaders()});
+      const r=await fetch(GH_API+'/user',{headers:{'Authorization':'token '+t,'Accept':'application/vnd.github+json'}});
       if(!r.ok){ if(info) info.textContent='❌ 令牌无效（HTTP '+r.status+'）'; return; }
       const me=await r.json();
       ghToken=t; localStorage.setItem('hupo_gh_token',t);
