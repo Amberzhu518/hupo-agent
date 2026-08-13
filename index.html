@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#5b9cf0">
 <style>
   :root{
+    --fs:15px;
     --blue:#5b9cf0; --blue-soft:#eaf4ff; --pink:#ff9ec4; --pink-soft:#fdeef4;
     --green:#5ed6a6; --purple:#b69cf0; --orange:#ffb86b; --gold:#ffce5c;
     --text:#3a3f55; --text-soft:#7a819a; --card:#ffffff; --line:#eef1f8;
@@ -20,6 +21,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{
     font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    font-size:var(--fs);
     color:var(--text);background:linear-gradient(135deg,#eaf6ff 0%,#fdeef4 60%,#f3ecff 100%);
     min-height:100vh;padding:14px;
   }
@@ -33,7 +35,7 @@
     .side.collapsed{width:0;flex:0 0 0;padding:0;opacity:0;pointer-events:none;margin-right:-14px}
     .side.collapsed .logo,.side.collapsed .side-foot,.side.collapsed .nav-text{display:none}
     .side.collapsed .nav-btn{padding:10px 0;justify-content:center}
-    .side.collapsed .nav-btn .ic{margin:0;font-size:18px}
+    .side.collapsed .nav-btn .ic{margin:0;font-size:calc(18 / 15 * var(--fs))}
   }
   /* 手机(<640px)：侧栏变左侧抽屉，.open 滑入（参考「琥珀的日常工作台」） */
   @media(max-width:640px){
@@ -56,56 +58,56 @@
     }
     /* 手机顶部条：菜单按钮浮在最显眼位置 */
     .topbar{padding:12px 14px;gap:10px}
-    .menu-btn{width:42px;height:42px;font-size:20px;box-shadow:0 3px 12px rgba(120,140,200,.28)}
+    .menu-btn{width:42px;height:42px;font-size:calc(20 / 15 * var(--fs));box-shadow:0 3px 12px rgba(120,140,200,.28)}
     /* 抽屉内菜单按钮文字更大 */
-    .side .nav-btn{font-size:15px;padding:12px 14px;border-radius:14px}
+    .side .nav-btn{font-size:calc(15 / 15 * var(--fs));padding:12px 14px;border-radius:14px}
     .side .logo{padding:6px 8px 18px}
-    .side .logo b{font-size:16px}
+    .side .logo b{font-size:calc(16 / 15 * var(--fs))}
     .side .logo .ava{width:46px;height:46px;border-radius:14px}
     /* 抽屉侧栏关闭按钮（顶部右上） */
-    .side-close{position:sticky;top:0;width:36px;height:36px;font-size:18px;align-self:flex-end}
+    .side-close{position:sticky;top:0;width:36px;height:36px;font-size:calc(18 / 15 * var(--fs));align-self:flex-end}
   }
   .side .nav-text{display:inline-block;white-space:nowrap;transition:opacity .15s ease}
   .side.collapsed .logo,.side.collapsed .side-foot,.side.collapsed .nav-text{display:none}
   .side.collapsed .nav-btn{padding:10px 0;justify-content:center}
-  .side.collapsed .nav-btn .ic{margin:0;font-size:18px}
+  .side.collapsed .nav-btn .ic{margin:0;font-size:calc(18 / 15 * var(--fs))}
   .logo{display:flex;align-items:center;gap:10px;padding:4px 8px 14px}
-  .logo .ava{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--pink));display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 38px;overflow:hidden;cursor:pointer}
+  .logo .ava{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--pink));display:flex;align-items:center;justify-content:center;font-size:calc(22 / 15 * var(--fs));flex:0 0 38px;overflow:hidden;cursor:pointer}
   .logo .ava img{width:100%;height:100%;object-fit:cover;display:block}
-  .logo b{font-size:15px}
-  .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
+  .logo b{font-size:calc(15 / 15 * var(--fs))}
+  .logo small{display:block;color:var(--text-soft);font-size:calc(11 / 15 * var(--fs));font-weight:400}
   /* 菜单按钮（顶栏左上） */
-  .menu-btn{border:none;background:var(--blue-soft);color:var(--blue);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex:0 0 36px;position:relative;z-index:200;box-shadow:0 2px 8px rgba(120,140,200,.18)}
+  .menu-btn{border:none;background:var(--blue-soft);color:var(--blue);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:calc(18 / 15 * var(--fs));display:flex;align-items:center;justify-content:center;flex:0 0 36px;position:relative;z-index:200;box-shadow:0 2px 8px rgba(120,140,200,.18)}
   .menu-btn:hover{background:#dcebff;box-shadow:0 3px 12px rgba(120,140,200,.28)}
   /* 侧栏收起后强制让 ☰ 浮在最显眼的位置 */
   body.side-collapsed-desktop .menu-btn{background:#fff;border:2px solid var(--blue);animation:menubob 1.6s ease-in-out infinite}
   @keyframes menubob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
   /* 侧栏关闭按钮（手机抽屉内） */
-  .side-close{border:none;background:#f0f2f8;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text-soft);align-self:flex-end;margin-bottom:4px}
+  .side-close{border:none;background:#f0f2f8;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:calc(14 / 15 * var(--fs));display:flex;align-items:center;justify-content:center;color:var(--text-soft);align-self:flex-end;margin-bottom:4px}
   .side-close:hover{background:#e6e9f3}
   /* 手机抽屉遮罩 */
   .side-mask{position:fixed;inset:0;background:rgba(40,46,70,.45);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s ease}
   .side-mask.show{opacity:1;pointer-events:auto}
   @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
-  .logo b{font-size:15px}
-  .logo small{display:block;color:var(--text-soft);font-size:11px;font-weight:400}
+  .logo b{font-size:calc(15 / 15 * var(--fs))}
+  .logo small{display:block;color:var(--text-soft);font-size:calc(11 / 15 * var(--fs));font-weight:400}
   .nav-btn{border:none;background:transparent;text-align:left;padding:10px 12px;border-radius:12px;cursor:pointer;
-    font-size:14px;color:var(--text);display:flex;align-items:center;gap:9px;transition:.15s}
+    font-size:calc(14 / 15 * var(--fs));color:var(--text);display:flex;align-items:center;gap:9px;transition:.15s}
   .nav-btn:hover{background:var(--blue-soft)}
   .nav-btn.active{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;box-shadow:0 4px 12px rgba(120,140,200,.3)}
-  .nav-btn .ic{font-size:16px}
-  .side-foot{margin-top:auto;font-size:11px;color:var(--text-soft);padding:8px}
+  .nav-btn .ic{font-size:calc(16 / 15 * var(--fs))}
+  .side-foot{margin-top:auto;font-size:calc(11 / 15 * var(--fs));color:var(--text-soft);padding:8px}
   /* 主区 */
   .main{flex:1;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);border-radius:20px;
     box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;overflow:hidden}
   .topbar{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .topbar .title{font-size:18px;font-weight:700}
-  .stat{display:flex;align-items:center;gap:7px;background:var(--blue-soft);padding:6px 12px;border-radius:12px;font-size:13px}
+  .topbar .title{font-size:calc(18 / 15 * var(--fs));font-weight:700}
+  .stat{display:flex;align-items:center;gap:7px;background:var(--blue-soft);padding:6px 12px;border-radius:12px;font-size:calc(13 / 15 * var(--fs))}
   .stat.coin{background:#fff6e0}.stat.fire{background:#ffe9ef}.stat.clock{background:#eef3ff}.stat.count{background:#fff0f6;color:#d0588f;font-weight:600}
   .xpwrap{flex:1;min-width:160px}
   .xpbar{height:12px;background:#eef1f8;border-radius:8px;overflow:hidden}
   .xpfill{height:100%;background:linear-gradient(90deg,var(--blue),var(--pink));border-radius:8px;transition:.4s}
-  .xptxt{font-size:11px;color:var(--text-soft);margin-top:3px}
+  .xptxt{font-size:calc(11 / 15 * var(--fs));color:var(--text-soft);margin-top:3px}
   .dot{width:9px;height:9px;border-radius:50%;background:#bbb;display:inline-block}
   .dot.synced{background:var(--green)} .dot.offline{background:#e06a6a} .dot.syncing{background:var(--gold);animation:pulse 1s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -114,70 +116,71 @@
   .grid{display:grid;gap:14px}
   .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
   .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(120,140,200,.08);border:1px solid var(--line)}
-  .card h3{font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:7px}
-  .big{font-size:26px;font-weight:800}
-  .sub{color:var(--text-soft);font-size:12px}
+  .card h3{font-size:calc(14 / 15 * var(--fs));margin-bottom:12px;display:flex;align-items:center;gap:7px}
+  .big{font-size:calc(26 / 15 * var(--fs));font-weight:800}
+  .sub{color:var(--text-soft);font-size:calc(12 / 15 * var(--fs))}
   .bar{height:10px;background:#eef1f8;border-radius:6px;overflow:hidden;margin-top:8px}
   .bar>div{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--pink));transition:.4s}
   .bar.green>div{background:linear-gradient(90deg,var(--green),#9be8c8)}
   .bar.gold>div{background:linear-gradient(90deg,var(--gold),#ffd98a)}
-  .row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:calc(13 / 15 * var(--fs))}
   /* 对话 */
   .chat{flex:1;display:flex;flex-direction:column;height:100%}
   .msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:6px}
-  .msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:calc(14 / 15 * var(--fs));line-height:1.5;white-space:pre-wrap;word-break:break-word}
   .msg.bot{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
   .msg.me{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
   .chips{display:flex;gap:8px;flex-wrap:wrap;padding:10px 0}
-  .chip{border:1px solid var(--blue);color:var(--blue);background:#fff;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer}
+  .chip{border:1px solid var(--blue);color:var(--blue);background:#fff;border-radius:20px;padding:6px 14px;font-size:calc(12 / 15 * var(--fs));cursor:pointer}
   .chip:hover{background:var(--blue-soft)}
   .inputbar{display:flex;gap:8px;padding-top:10px;align-items:center}
-  .inputbar input{flex:1;border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;outline:none;min-width:0}
+  .inputbar input{flex:1;border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:calc(14 / 15 * var(--fs));outline:none;min-width:0}
   .inputbar input:focus{border-color:var(--blue)}
-  .iconbtn{border:none;background:var(--blue-soft);color:var(--blue);width:44px;height:44px;border-radius:14px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .iconbtn{border:none;background:var(--blue-soft);color:var(--blue);width:44px;height:44px;border-radius:14px;cursor:pointer;font-size:calc(18 / 15 * var(--fs));display:flex;align-items:center;justify-content:center}
   .iconbtn:hover{background:#dcebff}
   .iconbtn.recording{background:var(--pink);color:#fff;animation:pulse 1s infinite}
   .btn{border:none;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;padding:0 20px;border-radius:14px;
-    font-size:14px;cursor:pointer;font-weight:600;height:44px}
-  .btn:hover{opacity:.92}.btn.sm{padding:6px 12px;font-size:12px;border-radius:10px;height:auto}
+    font-size:calc(14 / 15 * var(--fs));cursor:pointer;font-weight:600;height:44px}
+  .btn:hover{opacity:.92}.btn.sm{padding:6px 12px;font-size:calc(12 / 15 * var(--fs));border-radius:10px;height:auto}
   .btn.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue)}
   /* 列表 */
   .item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:#fafbff;border:1px solid var(--line);margin-bottom:8px}
-  .item .main{flex:1;font-size:13px}
+  .item .main{flex:1;font-size:calc(13 / 15 * var(--fs));min-width:0;word-break:break-word;overflow-wrap:anywhere}
+  .item>.btn{flex:0 0 auto;margin-left:4px}
   .item.done .main{text-decoration:line-through;color:var(--text-soft)}
-  .tag{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--blue-soft);color:var(--blue)}
+  .tag{font-size:calc(11 / 15 * var(--fs));padding:2px 8px;border-radius:8px;background:var(--blue-soft);color:var(--blue)}
   .tag.p{background:#fff6e0;color:#c98a2a}.tag.c{background:#e9fbf2;color:#2a9c74}.tag.o{background:#f0ecff;color:#7a5bd0}
   .tag.imp{background:#ffe3ee;color:#d0588f}
-  .check{width:20px;height:20px;border-radius:6px;border:2px solid var(--blue);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;flex:0 0 20px}
+  .check{width:20px;height:20px;border-radius:6px;border:2px solid var(--blue);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:calc(13 / 15 * var(--fs));flex:0 0 20px}
   .check.on{background:var(--blue);border-color:var(--blue)}
   .note{background:#fafbff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
   .note-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .note-h .sub{font-size:11px;color:var(--text-soft);margin-left:2px}
-  .note-pts{margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.7}
+  .note-h .sub{font-size:calc(11 / 15 * var(--fs));color:var(--text-soft);margin-left:2px}
+  .note-pts{margin:8px 0 0;padding-left:20px;font-size:calc(13 / 15 * var(--fs));line-height:1.7}
   .note-pts>li{margin-bottom:10px}
   .note-item .note-t{font-weight:600;color:var(--text)}
-  .note-item .note-d{margin:4px 0 0;color:var(--text-soft);font-size:12.5px;line-height:1.8;background:#f3f6ff;border-left:3px solid var(--blue);padding:7px 10px;border-radius:0 8px 8px 0}
+  .note-item .note-d{margin:4px 0 0;color:var(--text-soft);font-size:calc(12.5 / 15 * var(--fs));line-height:1.8;background:#f3f6ff;border-left:3px solid var(--blue);padding:7px 10px;border-radius:0 8px 8px 0}
   .note-sub{margin:5px 0 0 4px;padding-left:16px;list-style:circle}
-  .note-sub>li{margin-bottom:3px;font-size:12px;color:var(--text-soft)}
+  .note-sub>li{margin-bottom:3px;font-size:calc(12 / 15 * var(--fs));color:var(--text-soft)}
   .addbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-  .addbar input,.addbar select,.addbar textarea{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;outline:none;min-width:0;font-family:inherit}
-  table{width:100%;border-collapse:collapse;font-size:13px}
+  .addbar input,.addbar select,.addbar textarea{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:calc(13 / 15 * var(--fs));outline:none;min-width:0;font-family:inherit}
+  table{width:100%;border-collapse:collapse;font-size:calc(13 / 15 * var(--fs))}
   th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
-  th{color:var(--text-soft);font-weight:600;font-size:12px}
-  .empty{color:var(--text-soft);font-size:13px;text-align:center;padding:24px}
+  th{color:var(--text-soft);font-weight:600;font-size:calc(12 / 15 * var(--fs))}
+  .empty{color:var(--text-soft);font-size:calc(13 / 15 * var(--fs));text-align:center;padding:24px}
   .ach{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;border-radius:16px;background:#fafbff;border:1px solid var(--line);text-align:center}
-  .ach .medal{font-size:30px;filter:grayscale(1);opacity:.4}
+  .ach .medal{font-size:calc(30 / 15 * var(--fs));filter:grayscale(1);opacity:.4}
   .ach.on .medal{filter:none;opacity:1}
   .ach.on{border-color:var(--gold);background:#fffaf0}
-  .ach small{font-size:11px;color:var(--text-soft)}
+  .ach small{font-size:calc(11 / 15 * var(--fs));color:var(--text-soft)}
   /* 博主卡片：标题第一排 + 简介 + 外联紧贴下方 */
   .broker{padding:10px 0;border-bottom:1px dashed var(--line)}
   .broker:last-of-type{border-bottom:0}
-  .broker-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
-  .broker-head .ic{font-size:18px}
-  .broker-head b{font-size:15px}
-  .broker-tag{font-size:11px;color:var(--text-soft);background:var(--blue-soft);color:var(--blue);padding:2px 8px;border-radius:8px;font-weight:500}
-  .broker-sub{font-size:12px;color:var(--text-soft);margin:4px 0 8px 26px}
+  .broker-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:calc(14 / 15 * var(--fs))}
+  .broker-head .ic{font-size:calc(18 / 15 * var(--fs))}
+  .broker-head b{font-size:calc(15 / 15 * var(--fs))}
+  .broker-tag{font-size:calc(11 / 15 * var(--fs));color:var(--text-soft);background:var(--blue-soft);color:var(--blue);padding:2px 8px;border-radius:8px;font-weight:500}
+  .broker-sub{font-size:calc(12 / 15 * var(--fs));color:var(--text-soft);margin:4px 0 8px 26px}
   /* 今日速览卡片 */
   .today-digest h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .today-digest h3 .sub{flex:1;font-weight:400;margin-left:2px}
@@ -185,55 +188,55 @@
   .inbox{border-color:var(--pink);background:linear-gradient(180deg,rgba(255,158,196,.10),rgba(255,255,255,.6))}
   .inbox-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
   .inbox-head h3{margin:0}
-  .inbox-head .sub{flex:1;font-weight:400;color:var(--text-soft);font-size:12px}
-  .inbox-cat{margin:12px 0 6px;font-size:14px;color:var(--text)}
+  .inbox-head .sub{flex:1;font-weight:400;color:var(--text-soft);font-size:calc(12 / 15 * var(--fs))}
+  .inbox-cat{margin:12px 0 6px;font-size:calc(14 / 15 * var(--fs));color:var(--text)}
   .inbox-list{list-style:none;margin:0;padding:0}
   .inbox-item{padding:10px 0;border-top:1px dashed var(--line);position:relative}
   .inbox-item:first-child{border-top:0}
   .inbox-item.read{opacity:.55}
-  .inbox-title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
-  .inbox-point{font-size:13px;color:var(--text);margin-top:3px;line-height:1.5}
-  .inbox-why{font-size:12px;color:var(--text-soft);margin-top:3px}
-  .inbox-link{display:inline-block;margin-top:5px;font-size:12px;color:var(--blue);text-decoration:none}
-  .inbox-mark{position:absolute;right:0;top:10px;font-size:11px;color:var(--blue);cursor:pointer;user-select:none}
+  .inbox-title{font-weight:600;font-size:calc(14 / 15 * var(--fs));display:flex;align-items:center;gap:6px}
+  .inbox-point{font-size:calc(13 / 15 * var(--fs));color:var(--text);margin-top:3px;line-height:1.5}
+  .inbox-why{font-size:calc(12 / 15 * var(--fs));color:var(--text-soft);margin-top:3px}
+  .inbox-link{display:inline-block;margin-top:5px;font-size:calc(12 / 15 * var(--fs));color:var(--blue);text-decoration:none}
+  .inbox-mark{position:absolute;right:0;top:10px;font-size:calc(11 / 15 * var(--fs));color:var(--blue);cursor:pointer;user-select:none}
   .inbox-item.read .inbox-mark{color:var(--text-soft)}
-  .inbox-rem{font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;padding:8px 0;position:relative}
+  .inbox-rem{font-size:calc(13 / 15 * var(--fs));line-height:1.6;color:var(--text);white-space:pre-wrap;padding:8px 0;position:relative}
   .inbox-rem.read{opacity:.6}
-  .dot-new{font-size:10px;background:#e0518a;color:#fff;border-radius:6px;padding:1px 6px;font-weight:500}
+  .dot-new{font-size:calc(10 / 15 * var(--fs));background:#e0518a;color:#fff;border-radius:6px;padding:1px 6px;font-weight:500}
   .digest-item{padding:10px 0;border-top:1px dashed var(--line)}
   .digest-item:first-child{border-top:0;padding-top:4px}
   .digest-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .digest-cat{font-size:11px;padding:2px 8px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;font-weight:500}
-  .digest-h b{font-size:14px}
-  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#3a3f55;color:#fff;padding:10px 18px;border-radius:14px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+  .digest-cat{font-size:calc(11 / 15 * var(--fs));padding:2px 8px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;font-weight:500}
+  .digest-h b{font-size:calc(14 / 15 * var(--fs))}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#3a3f55;color:#fff;padding:10px 18px;border-radius:14px;font-size:calc(13 / 15 * var(--fs));opacity:0;transition:.3s;pointer-events:none;z-index:99}
   .toast.show{opacity:1}
   /* 技能卡片 */
   .skill{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 14px;border-radius:18px;background:#fff;border:1px solid var(--line);cursor:pointer;transition:.15s;text-align:center}
   .skill:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(120,140,200,.18);border-color:var(--blue)}
-  .skill .emo{font-size:34px}
-  .skill b{font-size:14px}
-  .skill small{font-size:11px;color:var(--text-soft)}
+  .skill .emo{font-size:calc(34 / 15 * var(--fs))}
+  .skill b{font-size:calc(14 / 15 * var(--fs))}
+  .skill small{font-size:calc(11 / 15 * var(--fs));color:var(--text-soft)}
   /* 相册 */
   .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
   .photo{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fafbff}
   .photo img{width:100%;height:120px;object-fit:cover;display:block}
-  .photo .cap{font-size:11px;color:var(--text-soft);padding:6px 8px}
+  .photo .cap{font-size:calc(11 / 15 * var(--fs));color:var(--text-soft);padding:6px 8px}
   /* 弹窗 */
   .modal-mask{position:fixed;inset:0;background:rgba(40,46,70,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
   .modal{background:#fff;border-radius:20px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(40,46,70,.3)}
-  .modal h2{font-size:18px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
-  .modal .close{margin-left:auto;border:none;background:#f0f2f8;width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:16px}
-  .modal label{display:block;font-size:12px;color:var(--text-soft);margin:10px 0 4px}
-  .modal input,.modal textarea,.modal select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;outline:none;font-family:inherit}
+  .modal h2{font-size:calc(18 / 15 * var(--fs));display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .modal .close{margin-left:auto;border:none;background:#f0f2f8;width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:calc(16 / 15 * var(--fs))}
+  .modal label{display:block;font-size:calc(12 / 15 * var(--fs));color:var(--text-soft);margin:10px 0 4px}
+  .modal input,.modal textarea,.modal select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:calc(13 / 15 * var(--fs));outline:none;font-family:inherit}
   .modal .row2{display:flex;gap:10px}.modal .row2>*{flex:1}
-  .preview{background:#fafbff;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:260px;overflow:auto;margin-top:10px;font-size:12px}
+  .preview{background:#fafbff;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:260px;overflow:auto;margin-top:10px;font-size:calc(12 / 15 * var(--fs))}
   .modal video{width:100%;border-radius:12px;background:#000}
   .canvasprev{width:100%;border-radius:12px;border:1px solid var(--line);margin-top:10px;background:#fff}
   @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
 /* 通用能力栏 Cap（全模块统一：拍照/语音/联网检索/导入导出） */
 .capbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .capbar .btn{margin:0}
-.photos .photo .cap{padding:6px 8px;font-size:11px;color:var(--text-soft)}
+.photos .photo .cap{padding:6px 8px;font-size:calc(11 / 15 * var(--fs));color:var(--text-soft)}
 /* 打卡热力图 */
 .heat{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
 .heat>div{border-radius:4px}
@@ -241,12 +244,26 @@
 .mobilenav{display:none}
 @media(max-width:640px){
   .mobilenav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:140;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
-  .mobilenav button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-soft);font-size:10px;padding:5px 4px;min-width:48px;min-height:44px;cursor:pointer;font-weight:600}
+  .mobilenav button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-soft);font-size:calc(10 / 15 * var(--fs));padding:5px 4px;min-width:48px;min-height:44px;cursor:pointer;font-weight:600}
   .mobilenav button.on{color:var(--blue)}
   .view{padding-bottom:66px}
   .side-mask{z-index:150}
   .side{z-index:200}
 }
+/* 外卖优惠券 */
+.coupons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+.coupon{background:#fff;border:1px dashed var(--orange);border-radius:12px;padding:10px 12px}
+.coupon-p{color:var(--orange);font-weight:600;font-size:calc(12 / 15 * var(--fs))}
+.coupon-t{font-weight:700;margin:2px 0;font-size:calc(15 / 15 * var(--fs))}
+.coupon-d{color:var(--text-soft);font-size:calc(11 / 15 * var(--fs))}
+.coupon-foot{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:6px}
+.coupon-code{cursor:pointer;color:var(--blue);background:var(--blue-soft);padding:3px 8px;border-radius:8px;font-size:calc(12 / 15 * var(--fs))}
+.coupon-big{text-align:center;padding:8px 0}
+.cb-p{color:var(--orange);font-weight:700;font-size:calc(14 / 15 * var(--fs))}
+.cb-t{font-weight:800;margin:4px 0;font-size:calc(22 / 15 * var(--fs))}
+.cb-d{color:var(--text-soft);font-size:calc(12 / 15 * var(--fs))}
+.cb-code{cursor:pointer;margin:10px auto;display:inline-block;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;padding:8px 16px;border-radius:12px;font-weight:700;font-size:calc(15 / 15 * var(--fs))}
+.cb-exp{color:var(--text-soft);font-size:calc(11 / 15 * var(--fs))}
 </style>
 </head>
 <body>
@@ -291,6 +308,9 @@
       </div>
       <span class="stat" title="同步状态：点击手动同步" style="cursor:pointer" onclick="App.syncNow()"><span class="dot" id="syncDot"></span> <span id="syncTxt">同步</span></span>
       <button class="btn sm ghost" onclick="App.openData()">数据</button>
+      <button class="btn sm ghost" onclick="App.fontSize(-1)" title="缩小字体">A-</button>
+      <button class="btn sm ghost" onclick="App.fontSize(1)" title="放大字体">A+</button>
+      <button class="btn sm ghost" onclick="App.fontSize(0)" title="恢复标准字号">标准</button>
     </div>
     <div class="view" id="view"></div>
   </section>
@@ -346,7 +366,16 @@ const DEFAULT = {
                 {id:'first_review',name:'吾日三省',desc:'完成第一次每日复盘',got:false},
                 {id:'lv5',name:'小有所成',desc:'达到 LV5',got:false},
                 {id:'coin100',name:'小金库',desc:'累计 100 木币',got:false}],
-  chat:[{role:'bot',text:'嗨，我是你的专属管家琥珀 🟡\n你可以直接对我说：\n· 今天学习2小时\n· 运动40分钟 / 走了6000步\n· 提醒我明天15:00交报告（重要）\n· 复盘：今天……\n· 加待办 明天交报告\n· 支出 35 午饭 个人\n· 我的状态\n也可以点左侧「技能中心」做PPT、数据分析、做图、写文档；点麦克风语音录入；点📷拍照。'}]
+  chat:[{role:'bot',text:'嗨，我是你的专属管家琥珀 🟡\n你可以直接对我说：\n· 今天学习2小时\n· 运动40分钟 / 走了6000步\n· 提醒我明天15:00交报告（重要）\n· 复盘：今天……\n· 加待办 明天交报告\n· 支出 35 午饭 个人\n· 我的状态\n也可以点左侧「技能中心」做PPT、数据分析、做图、写文档；点麦克风语音录入；点📷拍照。'}],
+  coupons:[
+    {id:'c1',platform:'美团外卖',title:'满30减12',desc:'午餐/晚餐外卖通用',code:'MT30-12',expire:'2026-12-31',used:false},
+    {id:'c2',platform:'饿了么',title:'满25减8',desc:'超级会员专享',code:'ELM25-8',expire:'2026-12-31',used:false},
+    {id:'c3',platform:'肯德基',title:'疯狂星期四 买一赠一',desc:'每周四可用',code:'KFC44',expire:'2026-12-31',used:false},
+    {id:'c4',platform:'星巴克',title:'中杯第二杯半价',desc:'门店/专星送',code:'SB2ND',expire:'2026-12-31',used:false},
+    {id:'c5',platform:'瑞幸咖啡',title:'9.9元任意饮',desc:'每日一杯',code:'LK99',expire:'2026-12-31',used:false},
+    {id:'c6',platform:'麦当劳',title:'1+1=19.9元',desc:'套餐组合',code:'M19',expire:'2026-12-31',used:false}
+  ],
+  couponSeen:{}
 };
 
 let state = load();
@@ -916,7 +945,7 @@ function viewOverview(){
   <div class="grid g4">
     <div class="card"><h3>🟡 等级</h3><div class="big">LV${state.level}</div><div class="sub">XP ${state.xp}/${state.xpToNext}</div></div>
     <div class="card"><h3>🪙 木币</h3><div class="big">${state.mucoins}</div><div class="sub">完成行动可赚取</div></div>
-    <div class="card"><h3>🔥 连续签到</h3><div class="big">${state.streak}<span style="font-size:14px">天</span></div><div class="sub">最长 ${state.longestStreak} 天</div></div>
+    <div class="card"><h3>🔥 连续签到</h3><div class="big">${state.streak}<span style="font-size:calc(14 / 15 * var(--fs))">天</span></div><div class="sub">最长 ${state.longestStreak} 天</div></div>
     <div class="card"><h3>📝 待办</h3><div class="big">${undone}</div><div class="sub">条未完成</div></div>
   </div>
   <div class="grid g2" style="margin-top:14px">
@@ -932,10 +961,10 @@ function viewOverview(){
       <div class="row" style="margin-top:10px"><span class="sub">个人</span><b>${b.personal} 元</b></div>
       <div class="row"><span class="sub">公司垫付</span><b>${b.company} 元</b></div>
       <div class="row"><span class="sub">其他</span><b>${b.other} 元</b></div>
-      ${used>b.limit*0.9?'<div style="margin-top:10px;color:#e06a6a;font-size:12px">⚠️ 预算即将/已经超支，注意控制～</div>':''}
+      ${used>b.limit*0.9?'<div style="margin-top:10px;color:#e06a6a;font-size:calc(12 / 15 * var(--fs))">⚠️ 预算即将/已经超支，注意控制～</div>':''}
     </div>
   </div>
-  ${due?`<div class="card" style="margin-top:14px;border-color:var(--pink)"><h3>⏰ 最近倒计时</h3><div class="big" style="font-size:18px">${escapeHtml(due.text)}</div><div class="sub">⏳ 还有 ${fmtDur(due.due-Date.now())}（${fmtDue(due.due)}）</div></div>`:''}
+  ${due?`<div class="card" style="margin-top:14px;border-color:var(--pink)"><h3>⏰ 最近倒计时</h3><div class="big" style="font-size:calc(18 / 15 * var(--fs))">${escapeHtml(due.text)}</div><div class="sub">⏳ 还有 ${fmtDur(due.due-Date.now())}（${fmtDue(due.due)}）</div></div>`:''}
   <div class="card" style="margin-top:14px">
     <h3>⚡ 快捷操作</h3>
     <div class="chips">
@@ -959,6 +988,7 @@ function viewOverview(){
     </div>
     <div class="sub" style="margin-top:6px">点任意标签会在新标签打开对应平台/APP网页版；手机上部分会直接唤起对应 APP。</div>
   </div>
+  ${couponCardHtml()}
   ${heatmapHtml()}`;
 }
 function heatmapHtml(){
@@ -1030,7 +1060,7 @@ function viewTasks(){
     <div class="addbar"><input id="taskIn" placeholder="例如：明天15:00交月度报告" onkeydown="if(event.key==='Enter')App.addTask()"/>
       <input id="taskDue" type="datetime-local" style="max-width:180px"/>
       <input id="taskTag" placeholder="标签(选填)" style="max-width:110px"/>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft)"><input type="checkbox" id="taskImp"/>重要</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:calc(12 / 15 * var(--fs));color:var(--text-soft)"><input type="checkbox" id="taskImp"/>重要</label>
       <button class="btn" onclick="App.addTask()">添加</button></div></div>
     <div class="grid g2">
       <div class="card"><h3>📌 今日待办（${state.tasksToday.length}）</h3>
@@ -1109,7 +1139,7 @@ function viewFinance(){
     <div class="sub" style="margin-top:6px;color:#e06a6a">⚠️ 当前手机支付软件（支付宝/微信）在 WorkBuddy 暂无可用连接器，琥珀不能自动读取你的支付数据。替代方案：在支付宝/微信里「导出账单」为 Excel/CSV，点下方导入，琥珀自动解析、每天10点提醒你分类（个人/公司垫付/其他）。</div>
     <div class="addbar" style="margin-top:8px">
       <button class="btn" onclick="App.importBill()">📥 导入账单文件</button>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft)"><input type="checkbox" id="billRemindChk" ${state.billRemind?'checked':''} onchange="App.setBillRemind(this.checked)"/> 每天10点提醒我分类当日消费</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:calc(12 / 15 * var(--fs));color:var(--text-soft)"><input type="checkbox" id="billRemindChk" ${state.billRemind?'checked':''} onchange="App.setBillRemind(this.checked)"/> 每天10点提醒我分类当日消费</label>
     </div>
     <div id="billOut" class="sub"></div>
   </div>`;
@@ -1121,7 +1151,7 @@ function viewExercise(){
   return `<div class="grid g3" style="margin-bottom:14px">
     <div class="card"><h3>累计运动次数</h3><div class="big">${cnt}</div></div>
     <div class="card"><h3>本周达标</h3><div class="big">${thisWeek}</div><div class="sub">/ ${state.weekly.targetExercise} 天</div></div>
-    <div class="card"><h3>目标</h3><div class="big" style="font-size:18px">每天≥30min<br>≥5000步</div></div>
+    <div class="card"><h3>目标</h3><div class="big" style="font-size:calc(18 / 15 * var(--fs))">每天≥30min<br>≥5000步</div></div>
   </div>
   <div class="card"><h3>🏃 运动记录</h3>${rows||'<div class="empty">还没有记录，说「运动40分钟」或「走了6000步」</div>'}</div>`;
 }
@@ -1158,7 +1188,7 @@ function viewPhotos(){
     <div class="addbar">
       <button class="btn" onclick="openCamera()">📷 拍照</button>
       <button class="btn ghost" onclick="document.getElementById('fileImg').click()">🖼️ 上传图片</button>
-      <input id="photoNote" placeholder="这张图备注（可选）" style="flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px"/>
+      <input id="photoNote" placeholder="这张图备注（可选）" style="flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:calc(13 / 15 * var(--fs))"/>
     </div></div>
     <div class="card"><h3>🖼️ 相册（${state.photos.length}）</h3>
     ${state.photos.length?`<div class="photos">${rows}</div>`:'<div class="empty">还没有照片，点「拍照」试试（手机端可直接调用摄像头）</div>'}</div>`;
@@ -1249,6 +1279,7 @@ const App = {
   syncNow(){ setSyncStatus('syncing'); syncPush(); setTimeout(syncPull, 600); toast('已触发同步'); },
   openData(){ DataModal.open(); },
   go(id){ curView=id; render(); },
+  fontSize(dir){ const fs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs'))||15; const next= dir===0?15:Math.max(12,Math.min(22, fs+(dir||0))); document.documentElement.style.setProperty('--fs', next+'px'); try{localStorage.setItem('hupo_fs', String(next));}catch(e){} toast('字号 '+next+'px'); },
   markPush(key){ key=decodeURIComponent(key); if(!(state.readPush||[]).includes(key)){ if(!state.readPush)state.readPush=[]; state.readPush.push(key); save(); } render(); },
   /* 侧栏显示/收起：纯 class 切换（参考「琥珀的日常工作台」）。
      手机：切 .open 抽屉；桌面：切 .collapsed 收起。force=true 强制展开/打开，force=false 强制收起/关闭，不传则翻转。 */
@@ -1316,7 +1347,7 @@ const App = {
       const out=document.getElementById('billOut');
       if(out){ out.innerHTML='已导入 <b>'+imported.length+'</b> 笔，请逐笔选类别后点「保存入账」：<div id="billList" style="margin:6px 0"></div><button class="btn" onclick="App.saveBill()">✅ 保存入账</button>';
         const list=document.getElementById('billList');
-        if(list){ list.innerHTML=imported.map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;margin:4px 0;font-size:13px"><span style="flex:1">${x.date} ${x.type==='收入'?'+':''}${x.amount} ${escapeHtml(x.note).slice(0,24)}</span><select id="bc${i}" onchange="App.setBillCat(${i},this.value)" style="padding:4px"><option value="personal">个人</option><option value="company">公司垫付</option><option value="other">其他</option></select></div>`).join(''); }
+        if(list){ list.innerHTML=imported.map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;margin:4px 0;font-size:calc(13 / 15 * var(--fs))"><span style="flex:1">${x.date} ${x.type==='收入'?'+':''}${x.amount} ${escapeHtml(x.note).slice(0,24)}</span><select id="bc${i}" onchange="App.setBillCat(${i},this.value)" style="padding:4px"><option value="personal">个人</option><option value="company">公司垫付</option><option value="other">其他</option></select></div>`).join(''); }
       }
       toast('导入成功，请分类'); 
     }catch(err){ const out=document.getElementById('billOut'); if(out){out.innerHTML='解析失败：'+err.message;} } };
@@ -1614,7 +1645,7 @@ const Skills={
     const wb=Skills._wb; if(!wb)return; const name=document.getElementById('daSheetSel').value; const ws=wb.Sheets[name]; const rows=XLSX.utils.sheet_to_json(ws);
     if(!rows.length){ document.getElementById('daOut').innerHTML='<div class="preview">空表</div>'; return; }
     const cols=Object.keys(rows[0]); const numCols=cols.filter(c=>rows.every(r=>typeof r[c]==='number'));
-    let statsHtml='<h3 style="margin:10px 0 6px;font-size:14px">📈 数值列统计</h3>';
+    let statsHtml='<h3 style="margin:10px 0 6px;font-size:calc(14 / 15 * var(--fs))">📈 数值列统计</h3>';
     numCols.forEach(c=>{ const arr=rows.map(r=>r[c]); const sum=arr.reduce((a,b)=>a+b,0); const avg=sum/arr.length; const mn=Math.min(...arr); const mx=Math.max(...arr);
       statsHtml+=`<div class="row"><span>${c}</span><span class="sub">Σ${sum.toFixed(1)} · 均值${avg.toFixed(1)} · 最小${mn} · 最大${mx}</span></div>`; });
     const txtCol=cols.find(c=>typeof rows[0][c]==='string')||cols[0];
@@ -1625,7 +1656,7 @@ const Skills={
         <button class="btn sm ghost" style="margin-top:8px" onclick="Skills.daChartPng()">⬇️ 导出图表PNG</button>`;
       setTimeout(()=>{ const ctx=document.getElementById('daChart'); if(ctx&&window.Chart){ new Chart(ctx,{type:'bar',data:{labels:lab,datasets:[{label:numCols[0],data:dat,backgroundColor:'#5b9cf0'}]},options:{responsive:true}}); } },50);
     }
-    const tableHtml='<h3 style="margin:10px 0 6px;font-size:14px">🔍 预览（前 30 行）</h3><div class="preview"><table><thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+rows.slice(0,30).map(r=>'<tr>'+cols.map(c=>`<td>${escapeHtml(String(r[c]))}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
+    const tableHtml='<h3 style="margin:10px 0 6px;font-size:calc(14 / 15 * var(--fs))">🔍 预览（前 30 行）</h3><div class="preview"><table><thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+rows.slice(0,30).map(r=>'<tr>'+cols.map(c=>`<td>${escapeHtml(String(r[c]))}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
     document.getElementById('daOut').innerHTML=statsHtml+chartHtml+tableHtml;
   },
   daChartPng(){ const c=document.getElementById('daChart'); if(!c){toast('无图表');return;} const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='分析图表.png'; a.click(); toast('已导出图表'); },
@@ -1752,7 +1783,7 @@ const Skills={
     const ch=[new docx.Paragraph({text:title,heading:docx.HeadingLevel.HEADING_1})]; body.forEach(p=>ch.push(new docx.Paragraph({children:[new docx.TextRun({text:p})]})));
     docx.Packer.toBlob(new docx.Document({sections:[{children:ch}]})).then(b=>{downloadBlob(b,title+'.docx');toast('已生成');closeModal();}).catch(()=>toast('失败')); },
   pomodoro(){ openModal(`<h2>⏱ 专注计时 <button class="close" onclick="closeModal()">✕</button></h2>
-    <div id="pomoTime" style="font-size:48px;text-align:center;margin:16px 0;font-weight:bold">25:00</div>
+    <div id="pomoTime" style="font-size:calc(48 / 15 * var(--fs));text-align:center;margin:16px 0;font-weight:bold">25:00</div>
     <div class="addbar"><button class="btn" onclick="Skills.pomoStart()">▶ 开始</button><button class="btn ghost" onclick="Skills.pomoPause()">⏸ 暂停</button><button class="btn ghost" onclick="Skills.pomoReset()">↺ 重置</button></div>
     <div class="sub" style="margin-top:8px">专注25分钟，结束提示你休息。完成后请在对话里说「专注25分钟」记一次学习打卡。</div>`);
     Skills._pomoLeft=25*60; },
@@ -1760,7 +1791,7 @@ const Skills={
   pomoPause(){ if(Skills._pomoTimer){clearInterval(Skills._pomoTimer);Skills._pomoTimer=null;} },
   pomoReset(){ if(Skills._pomoTimer){clearInterval(Skills._pomoTimer);Skills._pomoTimer=null;} Skills._pomoLeft=25*60; const el=document.getElementById('pomoTime'); if(el)el.textContent='25:00'; },
   calc(){ openModal(`<h2>🧮 计算器 <button class="close" onclick="closeModal()">✕</button></h2>
-    <input id="calcIn" style="width:100%;font-size:22px;text-align:right;margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:10px" value="0"/>
+    <input id="calcIn" style="width:100%;font-size:calc(22 / 15 * var(--fs));text-align:right;margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:10px" value="0"/>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
     ${['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(k=>`<button class="btn ${k==='='?'':'ghost'}" onclick="Skills.calcKey('${k}')">${k}</button>`).join('')}
     </div><div class="addbar" style="margin-top:8px"><button class="btn ghost" onclick="Skills.calcKey('C')">清空</button></div>`); },
@@ -1825,7 +1856,7 @@ const Cap = {
       <div class="addbar" style="margin-top:10px">
         <button class="btn" onclick="Cap._shoot('${module}')">📸 拍摄</button>
         <button class="btn ghost" onclick="Cap._file('${module}')">🖼️ 选择图片</button>
-        <input id="capNote" placeholder="图片备注(选填)" style="flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px"/>
+        <input id="capNote" placeholder="图片备注(选填)" style="flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:calc(13 / 15 * var(--fs))"/>
       </div>
       <input type="file" id="capFile" accept="image/*" style="display:none" onchange="Cap._onfile(event,'${module}')"/>
       <canvas id="capCv" style="display:none"></canvas>
@@ -1850,7 +1881,7 @@ const Cap = {
     openModal(`<h2>🎤 语音转文字 <button class="close" onclick="closeModal()">✕</button></h2>
       <div class="sub">说中文，自动转成文字填入下方；可保存到「${Cap.modName(module)}」。</div>
       <div class="addbar"><button class="btn" id="capMic" onclick="Cap._vrec()">🎤 开始</button></div>
-      <textarea id="capVoice" rows="5" placeholder="语音结果会出现在这里…" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;font-family:inherit"></textarea>
+      <textarea id="capVoice" rows="5" placeholder="语音结果会出现在这里…" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:calc(14 / 15 * var(--fs));font-family:inherit"></textarea>
       <div class="addbar" style="margin-top:10px">
         <button class="btn" onclick="Cap._vsave('${module}')">💾 保存为「${Cap.modName(module)}」记录</button>
         <button class="btn ghost" onclick="closeModal()">取消</button>
@@ -1918,6 +1949,44 @@ const Cap = {
 window.Cap=Cap;
 window.addEventListener('DOMContentLoaded', ()=>{ if(window.Cap) Cap._syncNav(curView); });
 
+/* ============ 外卖优惠券（定时/触发式推送） ============ */
+function validCoupons(){ const t=todayStr(); return (state.coupons||[]).filter(c=>!c.used && c.expire>=t); }
+function couponItemHtml(c){ return `<div class="coupon">
+  <div class="coupon-p">${escapeHtml(c.platform)}</div>
+  <div class="coupon-t">${escapeHtml(c.title)}</div>
+  <div class="coupon-d">${escapeHtml(c.desc||'')}</div>
+  <div class="coupon-foot"><span class="coupon-code" onclick="Coupon.copy('${c.code}')">🎫 ${escapeHtml(c.code)}</span><span class="btn sm ghost" onclick="Coupon.use('${c.id}')">标记已用</span></div>
+</div>`; }
+function couponCardHtml(){ const list=validCoupons(); if(!list.length) return ''; return `<div class="card coupon-card" style="margin-top:14px;background:linear-gradient(135deg,#fff4e6,#ffeef4);border-color:#ffd1a6">
+  <h3>🍔 外卖优惠券 <span class="sub">定时/触发推送优惠信息</span>
+    <button class="btn sm ghost" onclick="Coupon.push()" style="margin-left:auto">📣 立即推送一张</button></h3>
+  <div class="coupons">${list.map(c=>couponItemHtml(c)).join('')}</div>
+  <div class="sub" style="margin-top:6px">点击券码即可复制；每天午/晚高峰（11-13点、17-19点）会自动推送一张到首页。</div>
+</div>`; }
+const Coupon = {
+  copy(code){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(code).then(()=>toast('已复制券码 '+code)).catch(()=>{prompt('复制券码：',code);}); } else { prompt('复制券码：',code); } },
+  use(id){ const c=(state.coupons||[]).find(x=>x.id===id); if(c){c.used=true; save(); render(); toast('已标记使用');} },
+  push(){ const list=validCoupons(); if(!list.length){toast('暂无可推送的外卖券');return;} const c=list[Math.floor(Math.random()*list.length)]; this._show(c); },
+  _show(c){ openModal(`<h2>🍔 外卖优惠券推送 <button class="close" onclick="closeModal()">✕</button></h2>
+    <div class="coupon-big">
+      <div class="cb-p">${escapeHtml(c.platform)}</div>
+      <div class="cb-t">${escapeHtml(c.title)}</div>
+      <div class="cb-d">${escapeHtml(c.desc||'')}</div>
+      <div class="cb-code" onclick="Coupon.copy('${c.code}')">🎫 ${escapeHtml(c.code)}（点击复制）</div>
+      <div class="cb-exp">有效期至 ${escapeHtml(c.expire)}</div>
+    </div>
+    <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Coupon.copy('${c.code}');closeModal()">复制券码并使用</button><button class="btn ghost" onclick="closeModal()">稍后再说</button></div>`); },
+  autoCheck(){
+    const n=new Date(); const hm=n.getHours()*60+n.getMinutes();
+    const inLunch=(hm>=660&&hm<=780), inDinner=(hm>=1020&&hm<=1140);
+    if(!(inLunch||inDinner)) return;
+    const key='hupo_coupon_'+n.toDateString(); if(localStorage.getItem(key)) return;
+    const list=validCoupons(); if(!list.length) return;
+    localStorage.setItem(key,'1'); const c=list[Math.floor(Math.random()*list.length)]; this._show(c);
+  }
+};
+window.Coupon=Coupon;
+
 /* ============ 启动 ============ */
 // 兼容旧版(v1)数据
 try{ if(!localStorage.getItem(STORE_KEY) && localStorage.getItem('hupo_agent_v1')){ localStorage.setItem(STORE_KEY, localStorage.getItem('hupo_agent_v1')); } }catch(e){}
@@ -1948,6 +2017,16 @@ setInterval(syncPull, 15000);
 normalize(); save(); render();
 Cap.init();
 syncPull();
+/* 字号恢复（用户上次设置的全局字号） */
+(function(){ try{ const f=parseFloat(localStorage.getItem('hupo_fs')); if(f>=12&&f<=22) document.documentElement.style.setProperty('--fs', f+'px'); }catch(e){} })();
+/* 外卖优惠券：启动触发提示 + 每日午/晚高峰定时推送 */
+(function(){
+  try{
+    const list=validCoupons(); if(list.length) toast('🍔 你有 '+list.length+' 张外卖优惠券可用');
+    Coupon.autoCheck();
+    setInterval(()=>Coupon.autoCheck(), 60000);
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
