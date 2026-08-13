@@ -525,16 +525,22 @@ async function fetchPushes(){
   try{
     let listUrl, headers;
     if(syncProvider==='github'){
-      if(!ghToken||!ghOwner){ return; }
+      if(!ghToken||!ghOwner){ toast('⚠️ 琥珀来信：未配置 GitHub 令牌，请先在数据管理中填写'); pushCache={digest:{},reminder:null}; return; }
       listUrl='https://api.github.com/repos/'+ghOwner+'/'+ghDataRepo+'/contents/push';
       headers=ghHeaders();
     } else {
-      if(!gtToken||!gtOwner){ return; }
+      if(!gtToken||!gtOwner){ toast('⚠️ 琥珀来信：未配置 Gitee 令牌'); pushCache={digest:{},reminder:null}; return; }
       listUrl=GT_API+'/repos/'+gtOwner+'/'+gtDataRepo+'/contents/push?access_token='+gtToken;
       headers={};
     }
     const r=await fetch(listUrl,{headers});
-    if(!r.ok){ pushCache={digest:{},reminder:null}; return; }
+    if(!r.ok){
+      let detail='';
+      try{ const ej=await r.json(); detail=ej.message||''; }catch(_){}
+      toast('⚠️ 拉取琥珀来信失败（HTTP '+r.status+'）：'+(detail||'仓库或令牌有问题'));
+      console.warn('[fetchPushes] list failed', r.status, detail);
+      pushCache={digest:{},reminder:null}; return;
+    }
     const arr=await r.json();
     const names=(Array.isArray(arr)?arr:[]).map(x=>x.name||'').filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort().slice(-7);
     const out={digest:{},reminder:null};
@@ -543,7 +549,7 @@ async function fetchPushes(){
         let fr, fj;
         if(syncProvider==='github'){
           fr=await fetch('https://api.github.com/repos/'+ghOwner+'/'+ghDataRepo+'/contents/push/'+n, {headers});
-          if(!fr.ok) continue; fj=await fr.json();
+          if(!fr.ok){ console.warn('[fetchPushes] skip', n, fr.status); continue; } fj=await fr.json();
         } else {
           fr=await fetch(GT_API+'/repos/'+gtOwner+'/'+gtDataRepo+'/contents/push/'+n+'?access_token='+gtToken);
           if(!fr.ok) continue; fj=await fr.json();
@@ -551,11 +557,17 @@ async function fetchPushes(){
         const d=JSON.parse(unb64u(fj.content));
         Object.keys(d.digest||{}).forEach(c=>{ out.digest[c]=(out.digest[c]||[]).concat(d.digest[c]||[]); });
         if(d.reminder) out.reminder=d.reminder;
-      }catch(e){}
+      }catch(e){ console.warn('[fetchPushes] parse error', n, e); }
     }
     pushCache=out;
+    const totalItems = Object.values(out.digest||{}).reduce((s,a)=>s+a.length,0);
+    if(totalItems > 0) toast('✅ 琥珀来信已更新（'+totalItems+' 条）');
     if(curView==='overview'||curView==='digest') render();
-  }catch(e){ pushCache={digest:{},reminder:null}; }
+  }catch(e){
+    console.error('[fetchPushes]', e);
+    toast('⚠️ 拉取琥珀来信异常：'+e.message);
+    pushCache={digest:{},reminder:null};
+  }
 }
 function setProvider(p){
   syncProvider=p; localStorage.setItem('hupo_sync_provider',p);
