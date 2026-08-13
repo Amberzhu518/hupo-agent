@@ -256,6 +256,7 @@
   .view{padding-bottom:66px}
   .side-mask{z-index:150}
   .side{z-index:200}
+  .verbadge{bottom:64px}
 }
 /* 外卖优惠券 */
 .coupons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
@@ -277,6 +278,8 @@
 .cb-d{color:var(--text-soft);font-size:calc(12 / 15 * var(--fs))}
 .cb-code{cursor:pointer;margin:10px auto;display:inline-block;background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;padding:8px 16px;border-radius:12px;font-weight:700;font-size:calc(15 / 15 * var(--fs))}
 .cb-exp{color:var(--text-soft);font-size:calc(11 / 15 * var(--fs))}
+  /* 版本戳：始终可见，用于确认加载的是否为新版本 */
+  .verbadge{position:fixed;right:6px;bottom:6px;font-size:calc(10 / 15 * var(--fs));color:#888;background:rgba(255,255,255,.72);padding:2px 7px;border-radius:8px;z-index:300;pointer-events:none;letter-spacing:.3px}
 </style>
 </head>
 <body>
@@ -334,6 +337,7 @@
 <input type="file" id="fileXlsx" accept=".xlsx,.xls" style="display:none" />
 <input type="file" id="fileImg" accept="image/*" style="display:none" />
 <div id="modalRoot"></div>
+<div class="verbadge" id="verBadge">v…</div>
 
 <!-- 本地技能库（离线可用） -->
 <script src="./libs/chart.umd.min.js"></script>
@@ -390,6 +394,9 @@ const DEFAULT = {
 };
 
 let state = load();
+
+/* 版本戳：每次部署请同步更新此值，方便用户一眼确认是否加载到新版本 */
+const APP_VER = '20260813-2040';
 
 function load(){
   try{
@@ -2081,6 +2088,8 @@ setInterval(syncPull, 15000);
 normalize(); save(); render();
 Cap.init();
 syncPull();
+/* 版本戳显示 */
+(function(){ try{ const b=document.getElementById('verBadge'); if(b) b.textContent='v'+APP_VER; }catch(e){} })();
 /* 字号恢复（用户上次设置的全局字号） */
 (function(){ try{ const f=parseFloat(localStorage.getItem('hupo_fs')); if(f>=12&&f<=22) document.documentElement.style.setProperty('--fs', f+'px'); }catch(e){} })();
 /* 外卖优惠券：启动触发提示 + 每日午/晚高峰定时推送 */
