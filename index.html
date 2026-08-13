@@ -537,8 +537,8 @@ async function fetchPushes(){
     if(!r.ok){
       let detail='';
       try{ const ej=await r.json(); detail=ej.message||''; }catch(_){}
-      toast('⚠️ 拉取琥珀来信失败（HTTP '+r.status+'）：'+(detail||'仓库或令牌有问题'));
-      console.warn('[fetchPushes] list failed', r.status, detail);
+      toast('⚠️ 拉取琥珀来信失败（HTTP '+r.status+'）\n请求：'+listUrl+'\nOwner：'+ghOwner+'\n'+(detail||''));
+      console.warn('[fetchPushes] list failed', r.status, detail, 'url='+listUrl, 'owner='+ghOwner);
       pushCache={digest:{},reminder:null}; return;
     }
     const arr=await r.json();
