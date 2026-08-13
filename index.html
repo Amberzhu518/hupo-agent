@@ -381,12 +381,10 @@ const DEFAULT = {
                 {id:'coin100',name:'小金库',desc:'累计 100 木币',got:false}],
   chat:[{role:'bot',text:'嗨，我是你的专属管家琥珀 🟡\n你可以直接对我说：\n· 今天学习2小时\n· 运动40分钟 / 走了6000步\n· 提醒我明天15:00交报告（重要）\n· 复盘：今天……\n· 加待办 明天交报告\n· 支出 35 午饭 个人\n· 我的状态\n也可以点左侧「技能中心」做PPT、数据分析、做图、写文档；点麦克风语音录入；点📷拍照。'}],
   coupons:[
-    {id:'c1',platform:'美团外卖',title:'满30减12',desc:'午餐/晚餐外卖通用',code:'MT30-12',expire:'2026-12-31',used:false,promoUrl:'https://www.meituan.com/activity/coupon',baiduKw:'美团 8月 满减活动 力度最大',sourceNote:'点击打开平台活动页 / 跳转百度搜索最新活动'},
-    {id:'c2',platform:'饿了么',title:'满25减8',desc:'超级会员专享',code:'ELM25-8',expire:'2026-12-31',used:false,promoUrl:'https://www.ele.me/activity',baiduKw:'饿了么 8月 满减 优惠活动 力度最大',sourceNote:'点击打开平台活动页 / 跳转百度搜索最新活动'},
-    {id:'c3',platform:'肯德基',title:'疯狂星期四 买一赠一',desc:'每周四可用',code:'KFC44',expire:'2026-12-31',used:false,promoUrl:'https://www.kfc.com.cn/coupon',baiduKw:'肯德基 8月 最新优惠 折扣最大 活动',sourceNote:'点击打开平台活动页 / 跳转百度搜索最新活动'},
-    {id:'c4',platform:'星巴克',title:'中杯第二杯半价',desc:'门店/专星送',code:'SB2ND',expire:'2026-12-31',used:false,promoUrl:'https://www.starbucks.com.cn/promotion',baiduKw:'星巴克 8月 最新优惠 满减券 买一送一',sourceNote:'点击打开平台活动页 / 跳转百度搜索最新活动'},
-    {id:'c5',platform:'瑞幸咖啡',title:'9.9元任意饮',desc:'每日一杯',code:'LK99',expire:'2026-12-31',used:false,promoUrl:'https://www.luckincoffee.com/coupon',baiduKw:'瑞幸咖啡 8月 最新优惠券 满减',sourceNote:'点击打开平台活动页 / 跳转百度搜索最新活动'},
-    {id:'c6',platform:'麦当劳',title:'1+1=19.9元',desc:'套餐组合',code:'M19',expire:'2026-12-31',used:false,promoUrl:'https://www.mcdonalds.com.cn/page/coupon',baiduKw:'麦当劳 8月 最新优惠 折扣最大 满减',sourceNote:'点击打开平台活动页 / 跳转百度搜索最新活动'}
+    {id:'c1',platform:'京东',title:'领券中心 满减',desc:'京东超市/到家通用',code:'JD-LQ',expire:'2026-12-31',used:false,homeUrl:'https://www.jd.com/',promoUrl:'https://coupon.m.jd.com/',sourceNote:'点击直接跳转京东'},
+    {id:'c2',platform:'淘宝',title:'天天领红包',desc:'淘宝/天猫通用',code:'TB-HB',expire:'2026-12-31',used:false,homeUrl:'https://www.taobao.com/',promoUrl:'https://www.taobao.com/markets/tao/2018limeng',sourceNote:'点击直接跳转淘宝'},
+    {id:'c3',platform:'美团',title:'外卖红包 满减',desc:'美团外卖/到店通用',code:'MT-HB',expire:'2026-12-31',used:false,homeUrl:'https://www.meituan.com/',promoUrl:'https://www.meituan.com/activity/coupon',sourceNote:'点击直接跳转美团'},
+    {id:'c4',platform:'瑞幸',title:'9.9元任意饮',desc:'每日一杯',code:'LK99',expire:'2026-12-31',used:false,homeUrl:'https://www.luckincoffee.com/',promoUrl:'https://www.luckincoffee.com/coupon',sourceNote:'点击直接跳转瑞幸'}
   ],
   couponSeen:{}
 };
@@ -1968,17 +1966,17 @@ window.addEventListener('DOMContentLoaded', ()=>{ if(window.Cap) Cap._syncNav(cu
 /* ============ 外卖优惠券（定时/触发式推送） ============ */
 function validCoupons(){ const t=todayStr(); return (state.coupons||[]).filter(c=>!c.used && c.expire>=t); }
 function couponItemHtml(c){
-  const promo=c.promoUrl||'#', kw=c.baiduKw||(c.platform+' 优惠活动'), src=c.sourceNote||'点击打开平台活动页 / 跳转百度搜索最新活动';
+  const home=c.homeUrl||'#', promo=c.promoUrl||'#', src=c.sourceNote||'点击直接跳转平台';
   return `<div class="coupon">
   <div class="coupon-p">${escapeHtml(c.platform)}</div>
   <div class="coupon-t">${escapeHtml(c.title)}</div>
-  <div class="coupon-d">${escapeHtml(c.desc||'')}</div>
+  <div class="coupon-d">${escapeHtml(c.coupon||'')}</div>
   <div class="coupon-foot"><span class="coupon-code" onclick="Coupon.copy('${c.code}')">🎫 ${escapeHtml(c.code)}</span><span class="btn sm ghost" onclick="Coupon.use('${c.id}')">标记已用</span></div>
   <div class="coupon-promo">
-    <div class="cp-label">🎉 最近最大活动（外部连接器）</div>
+    <div class="cp-label">🎉 直达平台（外部连接器）</div>
     <div class="cp-links">
-      <a class="btn sm" href="${escapeHtml(promo)}" target="_blank" rel="noopener">🔗 平台活动入口</a>
-      <a class="btn sm ghost" href="https://www.baidu.com/s?wd=${encodeURIComponent(kw)}" target="_blank" rel="noopener">🔍 百度搜最新活动</a>
+      <a class="btn sm" href="${escapeHtml(home)}" target="_blank" rel="noopener">🔗 打开${escapeHtml(c.platform)}</a>
+      <a class="btn sm ghost" href="${escapeHtml(promo)}" target="_blank" rel="noopener">🎯 领券/活动</a>
     </div>
     <div class="cp-src">${escapeHtml(src)}</div>
   </div>
@@ -1988,32 +1986,29 @@ function couponCardHtml(){ const list=validCoupons(); if(!list.length) return ''
     <button class="btn sm ghost" onclick="Coupon.refreshActivities()" style="margin-left:auto">🔄 刷活动</button>
     <button class="btn sm ghost" onclick="Coupon.push()">📣 立即推送一张</button></h3>
   <div class="coupons">${list.map(c=>couponItemHtml(c)).join('')}</div>
-  <div class="sub" style="margin-top:6px">点击券码即可复制；每天午/晚高峰（11-13点、17-19点）会自动推送一张到首页。每张券卡都有「平台活动入口」「百度搜索最新」两个直跳按钮。</div>
+  <div class="sub" style="margin-top:6px">点击券码即可复制；每天午/晚高峰（11-13点、17-19点）会自动推送一张到首页。每张券卡都有「打开平台」「领券/活动」两个直跳按钮，点一下直接进对应 APP。</div>
 </div>`; }
 const Coupon = {
   copy(code){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(code).then(()=>toast('已复制券码 '+code)).catch(()=>{prompt('复制券码：',code);}); } else { prompt('复制券码：',code); } },
   use(id){ const c=(state.coupons||[]).find(x=>x.id===id); if(c){c.used=true; save(); render(); toast('已标记使用');} },
   push(){ const list=validCoupons(); if(!list.length){toast('暂无可推送的外卖券');return;} const c=list[Math.floor(Math.random()*list.length)]; this._show(c); },
-  /* 刷新所有券的"外部活动"信息——打开百度搜索每个券的活动页（同 Tab 新窗口），并以 toast 反馈。
-     因为浏览器受 CORS 限制无法直接 fetch 外卖平台 API，这里采用"官方入口 + 通用搜索"两条
-     通道替代，每张券卡都直接可点；自动策略：每天最多弹一次刷新。 */
+  /* 刷新所有券的"外部活动"——直接打开各平台官方主页（同 Tab 新窗口），toast 反馈。
+     点击即跳平台，不做搜索中转。 */
   refreshActivities(){
     const now=Date.now();
     const last=parseInt(localStorage.getItem('hupo_coupon_refresh_ts')||'0',10);
-    if(now-last<6*3600*1000 && last){ toast('6h 内已刷过，请直接打开卡片里的「百度搜最新活动」'); return; }
+    if(now-last<6*3600*1000 && last){ toast('6h 内已刷过，请直接打开卡片里的「打开平台」'); return; }
     const list=validCoupons(); if(!list.length){toast('暂无可刷新的外卖券');return;}
     let opened=0;
     list.forEach(c=>{
-      const kw=c.baiduKw||(c.platform+' 优惠活动 最大');
-      const url='https://www.baidu.com/s?wd='+encodeURIComponent(kw+' '+new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'));
-      window.open(url,'_blank','noopener');
-      opened++;
+      const url=c.homeUrl||'#';
+      if(url&&url!=='#'){ window.open(url,'_blank','noopener'); opened++; }
     });
     localStorage.setItem('hupo_coupon_refresh_ts', String(now));
-    toast('已为 '+opened+' 张外卖券打开百度最新活动搜索页（每张一个标签页）');
+    toast('已为 '+opened+' 个平台打开官方主页（每张一个标签页）');
   },
   _show(c){
-    const promo=c.promoUrl||'#', kw=c.baiduKw||(c.platform+' 8月 优惠活动');
+    const home=c.homeUrl||'#', promo=c.promoUrl||'#';
     openModal(`<h2>🍔 外卖优惠券推送 <button class="close" onclick="closeModal()">✕</button></h2>
     <div class="coupon-big">
       <div class="cb-p">${escapeHtml(c.platform)}</div>
@@ -2022,12 +2017,12 @@ const Coupon = {
       <div class="cb-code" onclick="Coupon.copy('${c.code}')">🎫 ${escapeHtml(c.code)}（点击复制）</div>
       <div class="cb-exp">有效期至 ${escapeHtml(c.expire)}</div>
       <div class="cb-promo">
-        <div class="cp-label">🎉 最近最大活动（外部连接器）</div>
+        <div class="cp-label">🎉 直达平台（外部连接器）</div>
         <div class="cp-links">
-          <a class="btn" href="${escapeHtml(promo)}" target="_blank" rel="noopener">🔗 平台活动入口</a>
-          <a class="btn ghost" href="https://www.baidu.com/s?wd=${encodeURIComponent(kw)}" target="_blank" rel="noopener">🔍 百度搜最新活动</a>
+          <a class="btn" href="${escapeHtml(home)}" target="_blank" rel="noopener">🔗 打开${escapeHtml(c.platform)}</a>
+          <a class="btn ghost" href="${escapeHtml(promo)}" target="_blank" rel="noopener">🎯 领券/活动</a>
         </div>
-        <div class="cp-src">${escapeHtml(c.sourceNote||'数据来自公开搜索与平台官方入口，仅供参考')}</div>
+        <div class="cp-src">${escapeHtml(c.sourceNote||'点击直接跳转平台官方入口')}</div>
       </div>
     </div>
     <div class="addbar" style="margin-top:12px"><button class="btn" onclick="Coupon.copy('${c.code}');closeModal()">复制券码并使用</button><button class="btn ghost" onclick="closeModal()">稍后再说</button></div>`); },
