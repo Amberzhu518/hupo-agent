@@ -512,6 +512,7 @@ function unb64u(b64){ return decodeURIComponent(escape(atob((b64||'').replace(/\
 let ghToken = localStorage.getItem('hupo_gh_token') || '';
 let ghOwner = localStorage.getItem('hupo_gh_owner') || '';
 let pushCache = null; // 云端推送（琥珀来信）缓存：{digest:{cat:[...]}, reminder:{text,generatedAt}}
+let showArchive = false; // 是否展开「已读归档」视图
 let ghDataRepo = 'hupo-agent-data';
 // 推送数据仓的固定 owner：agent_push.js 永远把每日推送写到 Amberzhu518/hupo-agent-data，
 // 与“登录令牌属于哪个账号”无关。读取琥珀来信必须固定用这个 owner，不能用 me.login 推断，否则对不上就 404。
@@ -937,34 +938,90 @@ function inboxHtml(){
   const d=pushCache;
   const cats=['新闻联播','AI日报','财务日报'].filter(c=>(d.digest[c]||[]).length);
   const hasRem=!!d.reminder;
-  if(!cats.length && !hasRem) return '<div class="card inbox"><h3>📨 琥珀来信</h3><div class="empty" style="padding:14px 0">暂时没有琥珀来信。当晚 21:00 / 23:00 自动推送后下次打开就能看到。<br><span class="sub">也可点上面「🔄 手动拉取琥珀来信」按钮立即刷新。</span></div></div>';
-  const emojiOf=c=>c==='新闻联播'?'📺':c==='AI日报'?'🤖':c==='财务日报'?'💹':'📌';
   const read=(state.readPush||[]);
+  // 活跃列表只展示「未读」条目；已读项自动进入归档，不在手动拉取流程中重复出现
+  const activeCats=cats.map(c=>({c, items:(d.digest[c]||[]).filter(it=>it && it.title && !read.includes(it.title))})).filter(x=>x.items.length);
+  const activeRem=hasRem && !read.includes('reminder|'+(d.reminder.generatedAt||''));
+  const archivedCount=cats.reduce((s,c)=>s+(d.digest[c]||[]).filter(it=>it&&it.title&&read.includes(it.title)).length,0)
+    + (hasRem && read.includes('reminder|'+(d.reminder.generatedAt||''))?1:0);
+  if(!activeCats.length && !activeRem){
+    let h='<div class="card inbox"><div class="inbox-head"><h3>📨 琥珀来信</h3><span class="sub">每天 21:00（每日推送）+ 23:00（睡前小结）由琥珀自动推送</span></div>';
+    h+='<div class="empty" style="padding:14px 0">✅ 当前来信已全部读完，没有新内容。<br><span class="sub">当晚 21:00 / 23:00 自动推送后，下次打开即会显示在这里。</span></div>';
+    if(archivedCount>0){
+      h+='<div style="margin-top:10px"><button class="btn sm ghost" onclick="toggleArchive()">📥 查看已读归档（'+archivedCount+' 条）</button></div>';
+    }
+    h+='</div>';
+    return h;
+  }
+  const emojiOf=c=>c==='新闻联播'?'📺':c==='AI日报'?'🤖':c==='财务日报'?'💹':'📌';
   let h='<div class="card inbox"><div class="inbox-head"><h3>📨 琥珀来信</h3><span class="sub">每天 21:00（每日推送）+ 23:00（睡前小结）由琥珀自动推送</span></div>';
-  cats.forEach(c=>{
-    const items=(d.digest[c]||[]).filter(it=>it && it.title);
-    if(!items.length) return;
-    h+='<div class="inbox-cat">'+emojiOf(c)+' <b>'+escapeHtml(c)+'</b></div><ul class="inbox-list">';
-    items.forEach(it=>{
-      const key=it.title; const isRead=read.includes(key);
-      h+='<li class="inbox-item'+(isRead?' read':'')+'"><div class="inbox-title">'+escapeHtml(it.title)+
-         (isRead?'':'<span class="dot-new">新</span>')+'</div>'+
+  activeCats.forEach(x=>{
+    h+='<div class="inbox-cat">'+emojiOf(x.c)+' <b>'+escapeHtml(x.c)+'</b></div><ul class="inbox-list">';
+    x.items.forEach(it=>{
+      const key=it.title;
+      h+='<li class="inbox-item"><div class="inbox-title">'+escapeHtml(it.title)+'<span class="dot-new">新</span></div>'+
          (it.point?'<div class="inbox-point">'+escapeHtml(it.point)+'</div>':'')+
          (it.why?'<div class="inbox-why">💡 '+escapeHtml(it.why)+'</div>':'')+
          (it.link?'<a class="inbox-link" href="'+encodeURI(it.link)+'" target="_blank" rel="noopener">🔗 详情</a>':'')+
-         '<span class="inbox-mark" onclick="App.markPush(\''+encodeURIComponent(key)+'\')">'+(isRead?'已读 ✓':'标记已读')+'</span></li>';
+         '<span class="inbox-mark" onclick="App.markPush(\''+encodeURIComponent(key)+'\')">标记已读</span></li>';
     });
     h+='</ul>';
   });
-  if(hasRem){
+  if(activeRem){
     const rem=d.reminder; const rkey='reminder|'+(rem.generatedAt||'');
-    const isRead=read.includes(rkey);
     h+='<div class="inbox-cat">🌙 <b>睡前小结</b></div>'+
-       '<div class="inbox-rem'+(isRead?' read':'')+'">'+escapeHtml(rem.text||'')+
-       '<span class="inbox-mark" onclick="App.markPush(\''+encodeURIComponent(rkey)+'\')">'+(isRead?'已读 ✓':'标记已读')+'</span></div>';
+       '<div class="inbox-rem">'+escapeHtml(rem.text||'')+
+       '<span class="inbox-mark" onclick="App.markPush(\''+encodeURIComponent(rkey)+'\')">标记已读</span></div>';
+  }
+  if(archivedCount>0){
+    h+='<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm ghost" onclick="toggleArchive()">📥 查看已读归档（'+archivedCount+' 条）</button>'+
+       '<button class="btn sm ghost" onclick="archiveAllRead()">全部归档当前来信</button></div>';
   }
   h+='</div>';
   return h;
+}
+
+function inboxArchiveHtml(){
+  if(!pushCache) return '';
+  const d=pushCache;
+  const cats=['新闻联播','AI日报','财务日报'].filter(c=>(d.digest[c]||[]).length);
+  const read=(state.readPush||[]);
+  const archived=cats.map(c=>({c, items:(d.digest[c]||[]).filter(it=>it&&it.title&&read.includes(it.title))})).filter(x=>x.items.length);
+  const rem=d.reminder; const rkey='reminder|'+(rem?rem.generatedAt||'':'');
+  const remRead=rem && read.includes(rkey);
+  if(!archived.length && !remRead) return '<div class="empty" style="padding:14px 0">还没有已读归档的内容。<br><span class="sub">在「📨 琥珀来信」里点「标记已读」，内容会自动归入此处，便于日后回看。</span></div>';
+  const emojiOf=c=>c==='新闻联播'?'📺':c==='AI日报'?'🤖':c==='财务日报'?'💹':'📌';
+  let h='<div class="archive-list">';
+  archived.forEach(x=>{
+    h+='<div class="inbox-cat">'+emojiOf(x.c)+' <b>'+escapeHtml(x.c)+'</b> · 已归档</div><ul class="inbox-list">';
+    x.items.forEach(it=>{
+      const key=it.title;
+      h+='<li class="inbox-item read"><div class="inbox-title">'+escapeHtml(it.title)+'</div>'+
+         (it.point?'<div class="inbox-point">'+escapeHtml(it.point)+'</div>':'')+
+         (it.why?'<div class="inbox-why">💡 '+escapeHtml(it.why)+'</div>':'')+
+         (it.link?'<a class="inbox-link" href="'+encodeURI(it.link)+'" target="_blank" rel="noopener">🔗 详情</a>':'')+
+         '<span class="inbox-mark" onclick="App.unmarkPush(\''+encodeURIComponent(key)+'\')">↩ 移回未读</span></li>';
+    });
+    h+='</ul>';
+  });
+  if(remRead){
+    h+='<div class="inbox-cat">🌙 <b>睡前小结</b> · 已归档</div>'+
+       '<div class="inbox-rem read">'+escapeHtml(rem.text||'')+
+       '<span class="inbox-mark" onclick="App.unmarkPush(\''+encodeURIComponent(rkey)+'\')">↩ 移回未读</span></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function toggleArchive(){ showArchive=!showArchive; render(); }
+function archiveAllRead(){
+  if(!pushCache) return;
+  const d=pushCache; if(!state.readPush)state.readPush=[];
+  const cats=['新闻联播','AI日报','财务日报'];
+  cats.forEach(c=>(d.digest[c]||[]).forEach(it=>{ if(it&&it.title&&!state.readPush.includes(it.title)){ state.readPush.push(it.title); } }));
+  if(d.reminder){ const rk='reminder|'+(d.reminder.generatedAt||''); if(!state.readPush.includes(rk)) state.readPush.push(rk); }
+  save(); render();
+  toast('✅ 已将当前来信全部归档');
 }
 
 function todayDigestHtml(){
@@ -993,6 +1050,12 @@ function viewDigest(){
     <div style="margin-bottom:8px"><button class="btn sm ghost" onclick="fetchPushes().then(()=>render())">🔄 手动拉取琥珀来信</button></div>
   </div>
   ${inbox || ''}
+  ${showArchive ? `
+  <div class="card" style="margin-top:14px;background:#f3f6ff;border-color:#c9d6ff">
+    <div class="inbox-head"><h3>📥 已读归档 <span class="sub">已读内容自动归档于此，可随时回看；不再占用活跃来信列表</span></h3>
+      <button class="btn sm ghost" onclick="toggleArchive()">收起 ▲</button></div>
+    ${inboxArchiveHtml()}
+  </div>` : ''}
   <div class="card today-digest" style="margin-top:14px">
     <h3>📰 今日笔记速览 <span class="sub">今天日期的「笔记」要点直接汇总</span>
       <button class="btn sm ghost" onclick="curView='research';render()" style="margin-left:auto">查看科研/学习笔记 →</button>
@@ -1353,6 +1416,7 @@ const App = {
   go(id){ curView=id; render(); },
   fontSize(dir){ const fs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs'))||15; const next= dir===0?15:Math.max(12,Math.min(22, fs+(dir||0))); document.documentElement.style.setProperty('--fs', next+'px'); try{localStorage.setItem('hupo_fs', String(next));}catch(e){} toast('字号 '+next+'px'); },
   markPush(key){ key=decodeURIComponent(key); if(!(state.readPush||[]).includes(key)){ if(!state.readPush)state.readPush=[]; state.readPush.push(key); save(); } render(); },
+  unmarkPush(key){ key=decodeURIComponent(key); if((state.readPush||[]).includes(key)){ state.readPush=state.readPush.filter(k=>k!==key); save(); } render(); },
   /* 侧栏显示/收起：纯 class 切换（参考「琥珀的日常工作台」）。
      手机：切 .open 抽屉；桌面：切 .collapsed 收起。force=true 强制展开/打开，force=false 强制收起/关闭，不传则翻转。 */
   toggleSide(force){
