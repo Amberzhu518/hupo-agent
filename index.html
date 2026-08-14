@@ -516,6 +516,9 @@ let ghDataRepo = 'hupo-agent-data';
 // 推送数据仓的固定 owner：agent_push.js 永远把每日推送写到 Amberzhu518/hupo-agent-data，
 // 与“登录令牌属于哪个账号”无关。读取琥珀来信必须固定用这个 owner，不能用 me.login 推断，否则对不上就 404。
 const PUSH_OWNER = 'Amberzhu518';
+// 公开兜底路径：推送数据也会部署到公开的 GitHub Pages（hupo-agent 站点），
+// 当用户令牌无法访问私有仓时，自动从此公开路径读取（无需认证）
+const PUSH_PUBLIC_BASE = 'https://amberzhu518.github.io/hupo-agent/data/push';
 let ghSyncPath = 'sync/hupo-agent-sync.json';
 let ghFileSha = localStorage.getItem('hupo_gh_sha') || '';
 const GH_API='https://api.github.com';
@@ -541,6 +544,7 @@ async function fetchPushes(){
       attemptOwners.push(gtOwner);
     }
     let arr=null, usedOwner=null, lastErr='';
+    // 第一轮：用用户配置的令牌尝试所有候选 owner
     for(const owner of attemptOwners){
       const listUrl = syncProvider==='github'
         ? 'https://api.github.com/repos/'+owner+'/'+ghDataRepo+'/contents/push'
@@ -553,6 +557,19 @@ async function fetchPushes(){
         console.warn('[fetchPushes] list failed', owner, r.status, detail);
       }catch(e){ lastErr='net @'+owner+' '+e.message; console.warn('[fetchPushes] list error', owner, e); }
     }
+    // 第二轮：若用户令牌全部失败（404/401/403），尝试公开兜底路径（无需认证）
+    if(!arr && syncProvider==='github' && PUSH_PUBLIC_BASE && lastErr.match(/(404|401|403)/)){
+      console.warn('[fetchPushes] user token failed, trying public fallback:', PUSH_PUBLIC_BASE);
+      try{
+        // 公开路径返回的是 JSON 数组（文件列表），直接解析
+        const fr=await fetch(PUSH_PUBLIC_BASE+'/index.json', {cache:'no-cache'});
+        if(fr.ok){
+          const idx=await fr.json();
+          if(Array.isArray(idx)){ arr=idx; usedOwner='[public]'; headers={}; console.log('[fetchPushes] public fallback OK, files:',idx.length); }
+        }
+        if(!arr){ lastErr+=' | 公开路径也无数据'; }
+      }catch(e){ lastErr+=' | 公开路径异常 '+e.message; }
+    }
     if(!arr){
       toast('⚠️ 拉取琥珀来信失败：'+lastErr);
       pushCache={digest:{},reminder:null}; return;
@@ -561,13 +578,22 @@ async function fetchPushes(){
     const out={digest:{},reminder:null};
     for(const n of names){
       try{
-        const fileUrl = syncProvider==='github'
-          ? 'https://api.github.com/repos/'+usedOwner+'/'+ghDataRepo+'/contents/push/'+n
-          : GT_API+'/repos/'+usedOwner+'/'+gtDataRepo+'/contents/push/'+n+'?access_token='+gtToken;
-        const fr=await fetch(fileUrl,{headers});
-        if(!fr.ok){ console.warn('[fetchPushes] skip', n, fr.status); continue; }
-        const fj=await fr.json();
-        const d=JSON.parse(unb64u(fj.content));
+        let fileUrl, d;
+        if(usedOwner==='[public]'){
+          // 公开路径：直接读取 JSON，无需 base64 解码
+          fileUrl = PUSH_PUBLIC_BASE+'/'+n;
+          const fr=await fetch(fileUrl,{cache:'no-cache'});
+          if(!fr.ok){ console.warn('[fetchPushes] skip public', n, fr.status); continue; }
+          d=await fr.json();
+        } else {
+          fileUrl = syncProvider==='github'
+            ? 'https://api.github.com/repos/'+usedOwner+'/'+ghDataRepo+'/contents/push/'+n
+            : GT_API+'/repos/'+usedOwner+'/'+gtDataRepo+'/contents/push/'+n+'?access_token='+gtToken;
+          const fr=await fetch(fileUrl,{headers});
+          if(!fr.ok){ console.warn('[fetchPushes] skip', n, fr.status); continue; }
+          const fj=await fr.json();
+          d=JSON.parse(unb64u(fj.content));
+        }
         Object.keys(d.digest||{}).forEach(c=>{ out.digest[c]=(out.digest[c]||[]).concat(d.digest[c]||[]); });
         if(d.reminder) out.reminder=d.reminder;
       }catch(e){ console.warn('[fetchPushes] parse error', n, e); }
