@@ -513,6 +513,9 @@ let ghToken = localStorage.getItem('hupo_gh_token') || '';
 let ghOwner = localStorage.getItem('hupo_gh_owner') || '';
 let pushCache = null; // 云端推送（琥珀来信）缓存：{digest:{cat:[...]}, reminder:{text,generatedAt}}
 let ghDataRepo = 'hupo-agent-data';
+// 推送数据仓的固定 owner：agent_push.js 永远把每日推送写到 Amberzhu518/hupo-agent-data，
+// 与“登录令牌属于哪个账号”无关。读取琥珀来信必须固定用这个 owner，不能用 me.login 推断，否则对不上就 404。
+const PUSH_OWNER = 'Amberzhu518';
 let ghSyncPath = 'sync/hupo-agent-sync.json';
 let ghFileSha = localStorage.getItem('hupo_gh_sha') || '';
 const GH_API='https://api.github.com';
@@ -523,37 +526,47 @@ function ghHeaders(extra){ const h={'Authorization':'token '+ghToken,'Accept':'a
 async function fetchPushes(){
   if(syncProvider!=='github' && syncProvider!=='gitee'){ return; }
   try{
-    let listUrl, headers;
+    let headers;
+    // 推送数据仓库 owner 是固定的（琥珀工作台数据仓 PUSH_OWNER），与登录令牌账号无关。
+    // 候选顺序：固定 owner 优先；若 ghOwner 不同再回退尝试，最大化命中率。
+    const attemptOwners = [];
     if(syncProvider==='github'){
-      if(!ghToken||!ghOwner){ toast('⚠️ 琥珀来信：未配置 GitHub 令牌，请先在数据管理中填写'); pushCache={digest:{},reminder:null}; return; }
-      listUrl='https://api.github.com/repos/'+ghOwner+'/'+ghDataRepo+'/contents/push';
+      if(!ghToken){ toast('⚠️ 琥珀来信：未配置 GitHub 令牌，请先在数据管理中填写'); pushCache={digest:{},reminder:null}; return; }
       headers=ghHeaders();
+      attemptOwners.push(PUSH_OWNER);
+      if(ghOwner && ghOwner!==PUSH_OWNER) attemptOwners.push(ghOwner);
     } else {
       if(!gtToken||!gtOwner){ toast('⚠️ 琥珀来信：未配置 Gitee 令牌'); pushCache={digest:{},reminder:null}; return; }
-      listUrl=GT_API+'/repos/'+gtOwner+'/'+gtDataRepo+'/contents/push?access_token='+gtToken;
       headers={};
+      attemptOwners.push(gtOwner);
     }
-    const r=await fetch(listUrl,{headers});
-    if(!r.ok){
-      let detail='';
-      try{ const ej=await r.json(); detail=ej.message||''; }catch(_){}
-      toast('⚠️ 拉取琥珀来信失败（HTTP '+r.status+'）\n请求：'+listUrl+'\nOwner：'+ghOwner+'\n'+(detail||''));
-      console.warn('[fetchPushes] list failed', r.status, detail, 'url='+listUrl, 'owner='+ghOwner);
+    let arr=null, usedOwner=null, lastErr='';
+    for(const owner of attemptOwners){
+      const listUrl = syncProvider==='github'
+        ? 'https://api.github.com/repos/'+owner+'/'+ghDataRepo+'/contents/push'
+        : GT_API+'/repos/'+owner+'/'+gtDataRepo+'/contents/push?access_token='+gtToken;
+      try{
+        const r=await fetch(listUrl,{headers});
+        if(r.ok){ arr=await r.json(); usedOwner=owner; break; }
+        let detail=''; try{ const ej=await r.json(); detail=ej.message||''; }catch(_){}
+        lastErr='HTTP '+r.status+' @'+owner+' '+(detail||'');
+        console.warn('[fetchPushes] list failed', owner, r.status, detail);
+      }catch(e){ lastErr='net @'+owner+' '+e.message; console.warn('[fetchPushes] list error', owner, e); }
+    }
+    if(!arr){
+      toast('⚠️ 拉取琥珀来信失败：'+lastErr);
       pushCache={digest:{},reminder:null}; return;
     }
-    const arr=await r.json();
     const names=(Array.isArray(arr)?arr:[]).map(x=>x.name||'').filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort().slice(-7);
     const out={digest:{},reminder:null};
     for(const n of names){
       try{
-        let fr, fj;
-        if(syncProvider==='github'){
-          fr=await fetch('https://api.github.com/repos/'+ghOwner+'/'+ghDataRepo+'/contents/push/'+n, {headers});
-          if(!fr.ok){ console.warn('[fetchPushes] skip', n, fr.status); continue; } fj=await fr.json();
-        } else {
-          fr=await fetch(GT_API+'/repos/'+gtOwner+'/'+gtDataRepo+'/contents/push/'+n+'?access_token='+gtToken);
-          if(!fr.ok) continue; fj=await fr.json();
-        }
+        const fileUrl = syncProvider==='github'
+          ? 'https://api.github.com/repos/'+usedOwner+'/'+ghDataRepo+'/contents/push/'+n
+          : GT_API+'/repos/'+usedOwner+'/'+gtDataRepo+'/contents/push/'+n+'?access_token='+gtToken;
+        const fr=await fetch(fileUrl,{headers});
+        if(!fr.ok){ console.warn('[fetchPushes] skip', n, fr.status); continue; }
+        const fj=await fr.json();
         const d=JSON.parse(unb64u(fj.content));
         Object.keys(d.digest||{}).forEach(c=>{ out.digest[c]=(out.digest[c]||[]).concat(d.digest[c]||[]); });
         if(d.reminder) out.reminder=d.reminder;
